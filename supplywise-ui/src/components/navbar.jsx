@@ -21,7 +21,7 @@ export default function Navbar() {
         <nav className="navbar navbar-expand-lg bg-light fixed-top shadow" id="mainNav">
             <div className="container-fluid" style={{width: '90%'}}>
                 <Link className="navbar-brand text-black" href="/">
-                    SupplyWise
+                    <Image src="/Logo_Nav.png" alt="Supplywise" width={175} height={50} />
                 </Link>
                 <button className="navbar-toggler text-uppercase sw-bgcolor text-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                     <FontAwesomeIcon icon={faSearch} />

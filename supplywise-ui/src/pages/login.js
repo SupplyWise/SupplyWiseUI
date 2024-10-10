@@ -25,7 +25,7 @@ export default function Login() {
                 <title>Supplywise | Login</title>
                 <meta name="description" content="Login in SupplyWise" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <link rel="icon" href="/favicon.ico" />
+                <link rel="icon" href="/Logo_Icon.png" />
             </Head>
             <div className="container d-flex justify-content-center align-items-center vh-100">
             {!forgotPassword ? (
