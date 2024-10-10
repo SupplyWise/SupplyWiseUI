@@ -6,6 +6,11 @@
     color: #f65835;
 }
 
+.rounded-pill {
+  border-radius: 50rem !important;
+}
+
+
 .bg-container {
     position: relative;
     background-image: url('/Warehouse.jpg');
