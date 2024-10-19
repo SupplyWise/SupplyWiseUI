@@ -60,3 +60,11 @@
   color: #fa3e13;
   text-decoration: underline;
 }
+
+.bell-alert {
+  position: relative;
+  top: -15px;
+  color: white;
+  padding: 5px;
+  font-size: 18px;
+}

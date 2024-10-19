@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faBell } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt, faBell, faUser } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import DashboardNavLink from './dashboardNav/dashboardNavLink';
@@ -9,12 +9,18 @@ export default function Sidebar() {
 
     const pages = ["Home", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
-    
+
+    const numAlertas = 11;
+
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setCurrentPage(window.location.pathname);
         }
     }, []);
+
+    function logout() {
+        window.location.href = '/';
+    }
 
     return (
         <nav className="col-2 bg-light vh-100 sw-bgcolor" style={{
@@ -42,21 +48,27 @@ export default function Sidebar() {
             </div>
 
             {/* Alerts and Profile Section */}
-            <div>
-                <ul className="nav flex-column mb-4 fs-4 bg-light" style={{paddingBottom: "20px"}}>
-                    <li className="nav-item">
-                        <Link className="nav-link text-black" href="/alerts">
-                            {/*<FontAwesomeIcon icon={faBell} className="me-1" size='xs'/>*/}
-                            Alerts
-                        </Link>
-                    </li>
-                    <li className='nav-item'>
-                        <span className='text-black'>John Doe</span>
-                        <Link href="/logout" className="nav-link text-black">
-                            <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '16px', height: '16px' }}/>
-                        </Link>
-                    </li>
-                </ul>
+            <div className='row'>
+                <div className='col-12' style={{ paddingLeft: 0 }}>
+                    <ul className="nav flex-column p-0 fs-4" style={{ padding: "10px" }}>
+                        <li className="nav-item">
+                            <Link className="nav-link text-dark" href="/alerts">
+                                Alerts
+                                <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', padding: '0 0 5px 5px' }} />
+                                {numAlertas > 0 && <span className="bell-alert bg-danger rounded-pill">{numAlertas}</span>}
+                            </Link>
+                        </li>
+                        <li className='nav-item bg-dark text-white'>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} />
+                                    <span>Admin Nice</span>
+                                </div>
+                                <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '1.5vw', cursor: 'pointer' }} onClick={() => logout()} />
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </nav>
     );
