@@ -2,8 +2,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt, faBell } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
+import DashboardNavLink from './dashboardNav/dashboardNavLink';
+import { useState, useEffect } from 'react';
 
 export default function Sidebar() {
+
+    const pages = ["Home", "Restaurants", "Settings"];
+    const [currentPage, setCurrentPage] = useState('');
+    
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setCurrentPage(window.location.pathname);
+        }
+    }, []);
+
     return (
         <nav className="col-2 bg-light vh-100 sw-bgcolor" style={{
             backgroundColor: '#f8f9fa',
@@ -20,27 +32,12 @@ export default function Sidebar() {
                     </Link>
                 </div>
                 <div className='row'>
-                    <div className='col-1 bg-dark'></div>
-                    <div className='col-11'>
-                        {/* Nav Links */}
-                        <ul className="nav flex-column fs-4 fw-bold text-center">
-                            <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/dashboard">
-                                    Home
-                                </Link>
-                            </li>
-                            <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/dashboard/restaurants">
-                                    Restaurants
-                                </Link>
-                            </li>
-                            <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/dashboard/settings">
-                                    Settings
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
+                    {/* Nav Links */}
+                    <ul className="nav flex-column fs-4 fw-bold text-center">
+                        {pages.map((page, index) => (
+                            <DashboardNavLink key={index} text={page} currentPage={currentPage} />
+                        ))}
+                    </ul>
                 </div>
             </div>
 
