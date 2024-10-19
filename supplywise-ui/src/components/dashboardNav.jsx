@@ -19,23 +19,23 @@ export default function Sidebar() {
                         <Image src="/Logo_Nav.png" alt="Supplywise" width={200} height={58} />
                     </Link>
                 </div>
-                <div className='row h-100'>
+                <div className='row'>
                     <div className='col-1 bg-dark'></div>
                     <div className='col-11'>
                         {/* Nav Links */}
                         <ul className="nav flex-column fs-4 fw-bold text-center">
                             <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/">
+                                <Link className="nav-link text-white" href="/dashboard">
                                     Home
                                 </Link>
                             </li>
                             <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/restaurants">
+                                <Link className="nav-link text-white" href="/dashboard/restaurants">
                                     Restaurants
                                 </Link>
                             </li>
                             <li className="nav-item sw-bgcolor px-2">
-                                <Link className="nav-link text-white" href="/settings">
+                                <Link className="nav-link text-white" href="/dashboard/settings">
                                     Settings
                                 </Link>
                             </li>
