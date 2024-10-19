@@ -19,7 +19,7 @@ export default function Navbar() {
 
     return (
         <nav className="navbar navbar-expand-lg bg-light fixed-top shadow" id="mainNav">
-            <div className="container-fluid" style={{width: '90%'}}>
+            <div className="container-fluid" style={{ width: '90%' }}>
                 <Link className="navbar-brand text-black" href="/">
                     <Image src="/Logo_Nav.png" alt="Supplywise" width={175} height={50} />
                 </Link>
@@ -34,7 +34,12 @@ export default function Navbar() {
                             </Link>
                         </li>
                         <li className="nav-item mx-0 mx-lg-1">
-                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded-pill sw-bgcolor text-white fs-4`} href="/login">
+                            <Link href="/register" className="register-button nav-link py-3 px-0 px-lg-3 rounded-pill border text-black fs-5 fw-bold">
+                                Register
+                            </Link>
+                        </li>
+                        <li className="nav-item mx-0 mx-lg-1">
+                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded-pill sw-bgcolor text-white fs-5 fw-bold`} href="/login">
                                 Login
                             </Link>
                         </li>
