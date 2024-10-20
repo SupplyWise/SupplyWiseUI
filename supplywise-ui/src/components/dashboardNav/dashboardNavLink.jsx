@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function DashboardNavLink({ text , currentPage }) {
+export default function DashboardNavLink({ text , currentPage, selectedRestaurant }) {
     var href = text.toLowerCase();
     href = "/dashboard";
     if (text !== "Home") {
@@ -16,6 +16,16 @@ export default function DashboardNavLink({ text , currentPage }) {
                     </Link>
                 </div>
             </div>
+            {text === "Restaurants" && selectedRestaurant && 
+                <div className="row">
+                    <div className="col-1"></div>
+                    <div className="col-11">
+                        <Link className="nav-link text-white" href={`${href}/restaurants`}>
+                            {selectedRestaurant}
+                        </Link>
+                    </div>
+                </div>
+            }
         </li>
     );
 }
