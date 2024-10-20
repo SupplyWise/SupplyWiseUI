@@ -33,7 +33,7 @@ export default function DashboardLayout({ children }) {
 
             <div className="container-fluid" style={{ padding: '0px', height: '100vh', width: '100vw' }}>
                 <div className="row" style={{ margin: 0 }}>
-                    <Sidebar />
+                    <Sidebar selectedRestaurant={restaurantSelected} />
                     <div className="col-10" style={{ overflowY: 'auto', height: '100vh' }}>
                         <div className="container">
                             <div className="row mt-5" onClick={() => console.log(children)}>

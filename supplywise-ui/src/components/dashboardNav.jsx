@@ -5,7 +5,7 @@ import Link from 'next/link';
 import DashboardNavLink from './dashboardNav/dashboardNavLink';
 import { useState, useEffect } from 'react';
 
-export default function Sidebar() {
+export default function Sidebar({ selectedRestaurant }) {
 
     const pages = ["Home", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
@@ -41,7 +41,7 @@ export default function Sidebar() {
                     {/* Nav Links */}
                     <ul className="nav flex-column fs-4 fw-bold text-center">
                         {pages.map((page, index) => (
-                            <DashboardNavLink key={index} text={page} currentPage={currentPage} />
+                            <DashboardNavLink key={index} text={page} currentPage={currentPage} selectedRestaurant={selectedRestaurant} />
                         ))}
                     </ul>
                 </div>

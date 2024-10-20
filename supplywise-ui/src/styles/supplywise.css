@@ -68,3 +68,11 @@
   padding: 5px;
   font-size: 18px;
 }
+
+.restaurant-section-nav {
+  color: white;
+}
+
+.restaurant-section-nav:hover {
+  color: #f65835;
+}
