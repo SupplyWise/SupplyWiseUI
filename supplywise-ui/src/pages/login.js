@@ -12,7 +12,7 @@ export default function Login() {
 
         if (email === 'supplywise24@gmail.com' && password === 'login123') {
             sessionStorage.setItem('user', JSON.stringify({ email }));
-            window.location.href = '/dashboard';
+            window.location.href = '/management';
         } else {
             alert('Invalid email or password');
         }

@@ -4,8 +4,8 @@ import Link from "next/link";
 
 export default function DashboardNavLink({ text, currentPage, selectedRestaurant }) {
     var href = text.toLowerCase();
-    href = "/dashboard";
-    if (text !== "Home") {
+    href = "/management";
+    if (text !== "Dashboard") {
         href += `/${text.toLowerCase()}`;
     }
 

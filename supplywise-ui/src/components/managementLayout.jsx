@@ -1,4 +1,4 @@
-import Sidebar from "./dashboardNav";
+import Sidebar from "./sidebar";
 import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 
@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }) {
     return (
         <main>
             <Head>
-                <title>Supplywise | Dashboard</title>
+                <title>Supplywise | Management</title>
                 <meta name="description" content="Your solution for inventory management" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
                 <link rel="icon" href="/Logo_Icon.png" />

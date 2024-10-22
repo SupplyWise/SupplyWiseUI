@@ -2,12 +2,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt, faBell, faUser } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import DashboardNavLink from './dashboardNav/dashboardNavLink';
+import DashboardNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
 
 export default function Sidebar({ selectedRestaurant }) {
 
-    const pages = ["Home", "Restaurants", "Settings"];
+    const pages = ["Dashboard", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
 
     const numAlertas = 11;
