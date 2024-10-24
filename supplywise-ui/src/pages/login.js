@@ -28,7 +28,7 @@ export default function Login() {
                 })
                 .then((data) => {
                     sessionStorage.setItem('sessionToken', data.token);
-                    router.push('/dashboard');
+                    router.push('/management');
                 })
                 .catch((error) => {
                     console.error(error);

@@ -60,3 +60,19 @@
   color: #fa3e13;
   text-decoration: underline;
 }
+
+.bell-alert {
+  position: relative;
+  top: -15px;
+  color: white;
+  padding: 5px;
+  font-size: 18px;
+}
+
+.restaurant-section-nav {
+  color: white;
+}
+
+.restaurant-section-nav:hover {
+  color: #f65835;
+}
