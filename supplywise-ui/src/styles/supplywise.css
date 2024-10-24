@@ -2,9 +2,18 @@
     background-color: #f65835;
 }
 
+.sw-bgcolor:hover, .sw-bgcolor:active:focus, .sw-bgcolor:focus{
+    background-color: #fa3e13;
+}
+
 .sw-color{
     color: #f65835;
 }
+
+.rounded-pill {
+  border-radius: 10px !important;
+}
+
 
 .bg-container {
     position: relative;
@@ -33,10 +42,21 @@
     color: white;
   }
 
-  .start-20 {
-    left: 20% !important;
-  }
-  
-  .top-40 {
-    top: 40% !important;
-  }
+.start-20 {
+  left: 20% !important;
+}
+
+.top-40 {
+  top: 40% !important;
+}
+
+.forgot-password {
+  color: #f65835;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.forgot-password:hover {
+  color: #fa3e13;
+  text-decoration: underline;
+}

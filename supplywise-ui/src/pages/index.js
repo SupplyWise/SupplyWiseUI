@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Navbar from "@/components/navbar";
-import { useState, useEffect } from 'react';
 
 export default function Home() {
   return (
@@ -10,7 +9,7 @@ export default function Home() {
         <title>Supplywise</title>
         <meta name="description" content="Your solution for inventory management" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/Logo_Icon.png" />
       </Head>
       <div className="bg-container">
         <div className="content position-absolute top-40 start-20">
