@@ -2,19 +2,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOutAlt, faBell, faUser } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import DashboardNavLink from './sidebar/sidebarNavLink';
+import SidebarNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
 
-export default function Sidebar({ selectedRestaurant }) {
+export default function Sidebar() {
 
     const pages = ["Dashboard", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
+    const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
     const numAlertas = 11;
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setCurrentPage(window.location.pathname);
+            setSelectedRestaurant(sessionStorage.getItem('selectedRestaurant'));
         }
     }, []);
 
@@ -41,7 +43,7 @@ export default function Sidebar({ selectedRestaurant }) {
                     {/* Nav Links */}
                     <ul className="nav flex-column fs-4 fw-bold text-center">
                         {pages.map((page, index) => (
-                            <DashboardNavLink key={index} text={page} currentPage={currentPage} selectedRestaurant={selectedRestaurant} />
+                            <SidebarNavLink key={index} text={page} currentPage={currentPage} selectedRestaurant={selectedRestaurant} />
                         ))}
                     </ul>
                 </div>

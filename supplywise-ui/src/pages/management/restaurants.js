@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/managementLayout";
 import RestaurantCard from "@/components/restaurantCard";
 import { useEffect, useState } from 'react';
 
-export default function Restaurants({ setRestaurantSelected }) {
+export default function Restaurants() {
 
   const [restaurants, setRestaurants] = useState([]);
 

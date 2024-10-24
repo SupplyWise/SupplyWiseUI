@@ -1,10 +1,10 @@
-export default function RestaurantCard({ name, image, setRestaurantSelected }) {
+export default function RestaurantCard({ name, image }) {
 
     const handleClickOnCard = () => {
         if (name !== "Add Restaurant") {
-            setRestaurantSelected(name);
-        } else {
-            setRestaurantSelected(null);
+            sessionStorage.setItem('selectedRestaurant', name);
+            window.location.href = '/management/restaurants/inventory';
+        // } else {
         }
     }
 
