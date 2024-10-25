@@ -1,18 +1,9 @@
-import Head from "next/head";
-import Navbar from "@/components/navbar";
 import Card from "@/components/dashboardCard";
+import DashboardLayout from "@/components/managementLayout";
 
 export default function Dashboard() {
   return (
-    <main>
-      <Navbar />
-      <Head>
-        <title>Supplywise | Dashboard</title>
-        <meta name="description" content="Your solution for inventory management" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/Logo_Icon.png" />
-      </Head>
-
+    <DashboardLayout>
       <div style={{ padding: '20px', marginTop: '80px' }}>
         <div className="content">
           <h1 className="title" style={{ fontSize: "36px", marginBottom: '10px', textAlign: 'center' }}>
@@ -25,20 +16,20 @@ export default function Dashboard() {
 
         {/* Cards Section */}
         <div className="cards-container flex flex-wrap justify:space-around mt-40" style={{ display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', marginTop: '40px' }}>
-          <Card 
-            title="Manage Inventory" 
-            description="Keep track of your stock levels and updates." 
+          <Card
+            title="Manage Inventory"
+            description="Keep track of your stock levels and updates."
           />
-          <Card 
-            title="Orders" 
-            description="Manage and track your incoming and outgoing orders." 
+          <Card
+            title="Orders"
+            description="Manage and track your incoming and outgoing orders."
           />
-          <Card 
-            title="Analytics" 
-            description="View insightful data on your inventory trends." 
+          <Card
+            title="Analytics"
+            description="View insightful data on your inventory trends."
           />
         </div>
       </div>
-    </main>
+    </DashboardLayout>
   );
 }
