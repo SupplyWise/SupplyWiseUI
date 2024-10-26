@@ -40,7 +40,7 @@ export default function Register() {
             })
             .then((data) => {
               sessionStorage.setItem('sessionToken', data.token);
-              router.push('/dashboard');
+              router.push('/management');
             })
             .catch((error) => {
               const registerError = document.getElementById('register-error');
