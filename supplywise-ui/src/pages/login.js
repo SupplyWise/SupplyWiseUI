@@ -28,6 +28,7 @@ export default function Login() {
                 })
                 .then((data) => {
                     sessionStorage.setItem('sessionToken', data.token);
+                    sessionStorage.setItem('email', email);
                     router.push('/management');
                 })
                 .catch((error) => {

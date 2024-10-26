@@ -5,7 +5,8 @@ import Link from 'next/link';
 import SidebarNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
 
-export default function Sidebar() {
+export default function Sidebar({ sessionUser }) {
+    console.log(sessionUser);
 
     const pages = ["Dashboard", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
@@ -21,6 +22,7 @@ export default function Sidebar() {
     }, []);
 
     function logout() {
+        sessionStorage.clear();
         window.location.href = '/';
     }
 
@@ -64,7 +66,10 @@ export default function Sidebar() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} />
-                                    <span>Admin Nice</span>
+                                    {
+                                        sessionUser !== null &&
+                                        <span>{sessionUser.fullname}</span>
+                                    }
                                 </div>
                                 <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '1.5vw', cursor: 'pointer' }} onClick={() => logout()} />
                             </div>
