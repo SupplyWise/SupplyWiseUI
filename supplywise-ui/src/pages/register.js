@@ -39,8 +39,7 @@ export default function Register() {
               return response.text().then((text) => text ? JSON.parse(text) : {});
             })
             .then((data) => {
-              sessionStorage.setItem('sessionToken', data.token);
-              router.push('/management');
+              router.push('/login');
             })
             .catch((error) => {
               const registerError = document.getElementById('register-error');
