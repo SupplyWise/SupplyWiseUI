@@ -33,7 +33,7 @@ export default function Sidebar({ sessionUser }) {
             flexDirection: 'column',
             justifyContent: 'space-between',
             paddingRight: '0px',
-            boxShadow: '2px 0px 5px rgba(0, 0, 0, 0.1)',
+            boxShadow: '4px 0px 5px rgba(0, 0, 0, 0.2)',
         }}>
             <div className='h-100'>
                 <div className='text-center bg-light'>
@@ -44,25 +44,22 @@ export default function Sidebar({ sessionUser }) {
                 <div className='row'>
                     {/* Nav Links */}
                     <ul className="nav flex-column fs-4 fw-bold text-center">
+                        <hr className="my-0" />
                         {pages.map((page, index) => (
                             <SidebarNavLink key={index} text={page} currentPage={currentPage} selectedRestaurant={selectedRestaurant} />
                         ))}
                     </ul>
                 </div>
             </div>
-
+            
             {/* Alerts and Profile Section */}
-            <div className='row'>
-                <div className='col-12' style={{ paddingLeft: 0 }}>
+            <div className='row' style={{paddingLeft: "0px"}}>
+                <div className='col-12' style={{paddingLeft: "0px"}}>
+                    <hr/>
                     <ul className="nav flex-column p-0 fs-4" style={{ padding: "10px" }}>
                         <li className="nav-item">
-                            <Link className="nav-link text-dark" href="/alerts">
-                                Alerts
-                                <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', padding: '0 0 5px 5px' }} />
-                                {numAlertas > 0 && <span className="bell-alert bg-danger rounded-pill">{numAlertas}</span>}
-                            </Link>
                         </li>
-                        <li className='nav-item bg-dark text-white'>
+                        <li className='nav-item'>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
                                 <div style={{ display: 'flex', alignItems: 'center' }}>
                                     <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} />
@@ -71,6 +68,10 @@ export default function Sidebar({ sessionUser }) {
                                         <span>{sessionUser.fullname}</span>
                                     }
                                 </div>
+                                <Link className="nav-link text-dark pr-1" href="/alerts" style={{ paddingRight: "3px", paddingBottom: "16px"}}>
+                                    {numAlertas > 0 && <span className="bell-alert bg-danger rounded-pill">{numAlertas}</span>}
+                                    <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', padding: '0 0 -5px 10px' }} />
+                                </Link>
                                 <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '1.5vw', cursor: 'pointer' }} onClick={() => logout()} />
                             </div>
                         </li>
