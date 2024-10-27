@@ -1,5 +1,6 @@
 import ProfileLayout from "@/components/profileLayout";
 import { useState, useEffect } from "react";
+import { API_URL } from '../../../api_url';
 
 export default function Profile() {
     const [fullname, setFullname] = useState("");
@@ -7,10 +8,10 @@ export default function Profile() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isEditing, setIsEditing] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
+    const [errorPassword, setErrorPassword] = useState("");
+    const [errorConfirmPassword, setErrorConfirmPassword] = useState("");
+    const [formMessage, setFormMessage] = useState("");
 
-    const MIN_FULLNAME_LENGTH = 5;
-    const MAX_FULLNAME_LENGTH = 255;
     const MIN_PASSWORD_LENGTH = 8;
     const MAX_PASSWORD_LENGTH = 80;
 
@@ -25,41 +26,53 @@ export default function Profile() {
 
     const handleEdit = () => {
         setIsEditing(true);
-        setErrorMessage(""); // Limpa mensagens de erro ao entrar no modo de edição
+        clearErrors();
+    };
+
+    const clearErrors = () => {
+        setErrorPassword("");
+        setErrorConfirmPassword("");
+        setFormMessage("");
     };
 
     const validateInputs = () => {
-        if (!fullname.trim() || fullname.length < MIN_FULLNAME_LENGTH || fullname.length > MAX_FULLNAME_LENGTH) {
-            setErrorMessage("Full name must be between 5 and 255 characters.");
-            return false;
+        clearErrors();
+        let isValid = true;
+
+        if (!password || !confirmPassword) {
+            setErrorPassword("Password is required.");
+            setErrorConfirmPassword("Confirm password is required.");
+            isValid = false;
         }
-        if (password && (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH)) {
-            setErrorMessage("Password must be between 8 and 80 characters.");
-            return false;
-        }
-        if (confirmPassword && (confirmPassword.length < MIN_PASSWORD_LENGTH || confirmPassword.length > MAX_PASSWORD_LENGTH)) {
-            setErrorMessage("Confirm password must be between 8 and 80 characters.");
-            return false;
-        }
+        
         if (password !== confirmPassword) {
-            setErrorMessage("Passwords do not match.");
-            return false;
+            setErrorConfirmPassword("Passwords do not match.");
+            isValid = false;
         }
-        setErrorMessage(""); // Limpa qualquer erro anterior se a validação passar
-        return true;
+
+        if (password.length < MIN_PASSWORD_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
+            setErrorPassword("Password must be between 8 and 80 characters.");
+            isValid = false;
+        }
+
+        if (confirmPassword.length < MIN_PASSWORD_LENGTH || confirmPassword.length > MAX_PASSWORD_LENGTH) {
+            setErrorConfirmPassword("Confirm password must be between 8 and 80 characters.");
+            isValid = false;
+        }
+
+        return isValid;
     };
 
     const handleSave = async () => {
         if (!validateInputs()) return;
-
+    
         const user = JSON.parse(sessionStorage.getItem("loggedUser"));
         if (user) {
             const updatedUser = {
                 ...user,
-                fullname,
-                password: password || undefined,
+                password: password
             };
-
+    
             try {
                 const response = await fetch(`${API_URL}/users/email/${email}`, {
                     method: 'PUT',
@@ -69,28 +82,33 @@ export default function Profile() {
                     },
                     body: JSON.stringify(updatedUser)
                 });
-
+    
                 if (!response.ok) {
                     if (response.status === 400) {
-                        setErrorMessage("Invalid data provided.");
+                        setFormMessage("Invalid data provided.");
                     } else if (response.status === 404) {
-                        setErrorMessage("User not found.");
+                        setFormMessage("User not found.");
                     } else {
-                        setErrorMessage("An error occurred. Please try again.");
+                        setFormMessage("An error occurred. Please try again.");
                     }
                     return;
                 }
-
-                const updatedUserData = await response.json();
-                sessionStorage.setItem("loggedUser", JSON.stringify(updatedUserData));
+                
+                // Check if there is a response to avoid parsing errors
+                const updatedUserData = response.headers.get('Content-Length') !== '0' ? await response.json() : null;
+                if (updatedUserData) {
+                    sessionStorage.setItem("loggedUser", JSON.stringify(updatedUserData));
+                }
+    
                 setIsEditing(false);
-                setErrorMessage("Profile updated successfully!"); // Mensagem de sucesso
+                setFormMessage("Profile updated successfully!");
             } catch (error) {
                 console.error("Error updating profile:", error);
-                setErrorMessage("An error occurred. Please try again.");
+                setFormMessage("An error occurred. Please try again.");
             }
         }
     };
+    
 
     return (
         <ProfileLayout>
@@ -100,18 +118,16 @@ export default function Profile() {
                     <input
                         type="text"
                         value={fullname}
-                        onChange={(e) => setFullname(e.target.value)}
-                        disabled={!isEditing}
+                        disabled
                         style={{
                             width: '100%',
                             padding: '10px',
                             marginBottom: '8px',
-                            border: `1px solid ${isEditing ? '#f65835' : '#ccc'}`,
+                            border: `1px solid '#ccc'`,
                             borderRadius: '4px',
-                            backgroundColor: isEditing ? '#fff' : '#f5f5f5',
+                            backgroundColor: '#f5f5f5',
                         }}
                     />
-                    {errorMessage && <p style={{ color: 'red', fontSize: '14px' }}>{errorMessage}</p>}
                 </div>
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontWeight: 'bold' }}>Email</label>
@@ -145,6 +161,7 @@ export default function Profile() {
                             backgroundColor: isEditing ? '#fff' : '#f5f5f5',
                         }}
                     />
+                    {errorPassword && <p style={{ color: 'red', fontSize: '14px' }}>{errorPassword}</p>}
                 </div>
                 <div style={{ marginBottom: '20px' }}>
                     <label style={{ fontWeight: 'bold' }}>Confirm Password</label>
@@ -162,7 +179,9 @@ export default function Profile() {
                             backgroundColor: isEditing ? '#fff' : '#f5f5f5',
                         }}
                     />
+                    {errorConfirmPassword && <p style={{ color: 'red', fontSize: '14px' }}>{errorConfirmPassword}</p>}
                 </div>
+                {formMessage && <p style={{ color: formMessage === "Profile updated successfully!" ? 'green' : 'red', fontSize: '14px', marginBottom: '20px' }}>{formMessage}</p>}
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     {!isEditing ? (
                         <button onClick={handleEdit} style={{ padding: '10px 20px', backgroundColor: '#f65835', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
