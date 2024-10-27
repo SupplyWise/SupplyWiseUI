@@ -1,4 +1,4 @@
-export default function RestaurantCard({ name, image }) {
+export default function RestaurantCard({ name, creationDate }) {
 
     const handleClickOnCard = () => {
         if (name !== "Add Restaurant") {
@@ -11,10 +11,11 @@ export default function RestaurantCard({ name, image }) {
     return (
         <div className="col-4 pe-5 pb-4 pt-3">
             <div className="card" style={{ cursor: 'pointer' }} onClick={() => handleClickOnCard()} >
-                <img src={image} className="card-img-top" style={{ height: '25vh' }} alt={name} />
-                <div className="card-body">
+                <div className="card-header">
                     <h5 className="card-title">{name}</h5>
-                    {/* <p className="card-text">{subtitle}</p> */}
+                </div>
+                <div className="card-body">
+                    <p className="card-text">Created at <i className="text-muted">{creationDate.split('.')[0].replace('T', ' ')}</i></p>
                 </div>
             </div>
         </div>

@@ -36,17 +36,20 @@ export default function DashboardLayout({ children }) {
     }, []);
 
     const [companyToCreate, setCompanyToCreate] = useState('');
-
+    const [restaurantToCreate, setRestaurantToCreate] = useState('');
+    
     const handleCompanyCreation = (e) => {
         e.preventDefault();
-
+    
+        const token = sessionStorage.getItem('sessionToken');
+        const email = sessionStorage.getItem('email');
+    
         fetch(`${API_URL}/company/create?name=${companyToCreate}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${token}`,
             },
-            // body: JSON.stringify({ name: companyToCreate }),
         })
             .then((response) => {
                 if (!response.ok) {
@@ -56,7 +59,49 @@ export default function DashboardLayout({ children }) {
             })
             .then((message) => {
                 console.log(message);
+    
+                // Fetch user data to get company information
+                return fetch(`${API_URL}/users/email/${email}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+            })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                const company = data.company;
+                console.log(company);
+                if (company !== null) {
+                    // Create restaurant only if the company exists
+                    return fetch(`${API_URL}/restaurants/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({ name: restaurantToCreate, company: company }),
+                    });
+                } else {
+                    throw new Error('Company does not exist');
+                }
+            })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to create restaurant');
+                }
+                return response.text();
+            })
+            .then((message) => {
+                console.log(message);
                 sessionStorage.removeItem('loggedUser');
+                // Optionally, reload or navigate after success
                 window.location.reload();
             })
             .catch((error) => console.error(error));
@@ -91,10 +136,10 @@ export default function DashboardLayout({ children }) {
                                     :
                                     <>
                                         <div className="row mt-5">
-                                            <h2>Create a Company</h2>
-                                            <h5>Start by creating a company to manage your inventory</h5>
-                                            <form onSubmit={handleCompanyCreation} className="mt-3">
-                                                <div className="form-group">
+                                            <form onSubmit={handleCompanyCreation}>
+                                                <h2>Create a Company</h2>
+                                                <h5>Start by creating a company to manage your inventory</h5>
+                                                <div className="form-group mt-3">
                                                     {/* <label htmlFor="companyToCreate">Company Name</label> */}
                                                     <input
                                                         type="text"
@@ -103,6 +148,19 @@ export default function DashboardLayout({ children }) {
                                                         placeholder="Company Name"
                                                         value={companyToCreate}
                                                         onChange={(e) => setCompanyToCreate(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                                <h5 className="mt-3">Then, name your first restaurant</h5>
+                                                <div className="form-group mt-3">
+                                                    {/* <label htmlFor="restaurantToCreate">Restaurant Name</label> */}
+                                                    <input
+                                                        type="text"
+                                                        id="restaurantToCreate"
+                                                        className="form-control"
+                                                        placeholder="Restaurant Name"
+                                                        value={restaurantToCreate}
+                                                        onChange={(e) => setRestaurantToCreate(e.target.value)}
                                                         required
                                                     />
                                                 </div>
