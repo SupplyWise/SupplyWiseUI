@@ -21,6 +21,14 @@ export default function Sidebar({ sessionUser }) {
         }
     }, []);
 
+    function goToProfile() {
+        if (!sessionUser || sessionUser === null) {
+            alert('You must be logged in to access your profile.');
+            return
+        }
+        window.location.href = '/profile/user';
+    }
+
     function logout() {
         sessionStorage.clear();
         window.location.href = '/';
@@ -61,8 +69,8 @@ export default function Sidebar({ sessionUser }) {
                         </li>
                         <li className='nav-item'>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} />
+                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} onClick={() => goToProfile()}/>
                                     {
                                         sessionUser !== null &&
                                         <span>{sessionUser.fullname}</span>
