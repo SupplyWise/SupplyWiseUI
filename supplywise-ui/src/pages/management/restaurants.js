@@ -26,16 +26,6 @@ export default function Restaurants() {
       }
     );
 
-    /* setRestaurants([
-      { id: 1, name: "Burger King Aveiro", img: "/no-photo.jpg" },
-      { id: 2, name: "Burger King Porto", img: "/no-photo.jpg" },
-      { id: 3, name: "Burger King Lisboa", img: "/no-photo.jpg" },
-      { id: 4, name: "Burger King Viseu", img: "/no-photo.jpg" },
-      { id: 5, name: "Burger King Coimbra", img: "/no-photo.jpg" },
-      { id: 6, name: "Burger King Braga", img: "/no-photo.jpg" },
-      { id: 7, name: "Burger King Faro", img: "/no-photo.jpg" },
-    ]); */
-
   }, []);
 
   const handleRestaurantCreation = (e) => {
@@ -59,13 +49,40 @@ export default function Restaurants() {
                 console.log(message);
             })
             .catch((error) => console.error(error));
-    sessionStorage.removeItem('loggedUser');
     window.location.reload();
 };
 
 
   return (
     <DashboardLayout>
+      <div className="row">
+        <div className="col"></div>
+        <div className="col-auto">
+          <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
+        </div>
+      </div>
+
+      {/* Modal */}
+      <div className="modal fade" id="createRestaurantModal" tabIndex="-1" aria-labelledby="createRestaurantModalLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title mr-2" id="createRestaurantModalLabel">Create Restaurant</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleRestaurantCreation}>
+                <div className="mb-3">
+                  <label htmlFor="restaurantName" className="form-label">Restaurant Name</label>
+                  <input type="text" className="form-control" id="restaurantName" value={restaurantToCreate} onChange={(e) => setRestaurantToCreate(e.target.value)} required />
+                </div>
+                <button type="submit" className="btn sw-bgcolor">Create</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {restaurants?.map(restaurant => <RestaurantCard key={restaurant.id} name={restaurant.name} creationDate={restaurant.createdAt} />)}
     </DashboardLayout>
   );
