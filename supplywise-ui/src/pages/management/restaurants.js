@@ -58,7 +58,7 @@ export default function Restaurants() {
       <div className="row">
         <div className="col"></div>
         <div className="col-auto">
-          <button type="button" className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
+          <button type="button" className="btn sw-bgcolor" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
         </div>
       </div>
 
