@@ -21,7 +21,6 @@ export default function Inventory() {
                 name: 'water',
                 category: 'drinks',
                 expirationDate: new Date(),
-                priceByUn: 10,
                 quantity: 10,
                 un: 'kg',
             },
@@ -31,7 +30,6 @@ export default function Inventory() {
                 name: 'bread',
                 category: 'food',
                 expirationDate: new Date(),
-                priceByUn: 20,
                 quantity: 20,
                 un: 'kg',
             },
@@ -41,7 +39,6 @@ export default function Inventory() {
                 name: 'pork',
                 category: 'meat',
                 expirationDate: new Date(),
-                priceByUn: 30,
                 quantity: 30,
                 un: 'kg',
             },
@@ -51,14 +48,10 @@ export default function Inventory() {
                 category: 'vegetables',
                 expirationDate: new Date(),
                 barCodeNumber: '498874545123',
-                priceByUn: 40,
                 quantity: 40,
                 un: 'kg',
             },
         ];
-        productsInit.forEach(product => {
-            product.totalPrice = product.priceByUn * product.quantity;
-        });
         setProducts(productsInit);
     }, []);
 
@@ -132,10 +125,8 @@ export default function Inventory() {
                                                 <th scope="col">Product Name</th>
                                                 <th scope="col">Category</th>
                                                 <th scope="col">Expiration Date</th>
-                                                <th scope="col">Price/Un</th>
                                                 <th scope="col">Quantity</th>
                                                 <th scope="col">Unit</th>
-                                                <th scope="col" className='text-end' >Total Price</th>
                                                 <th scope="col"></th>
                                             </tr>
                                         </thead>
@@ -152,10 +143,8 @@ export default function Inventory() {
                                                         <td>{product.name}</td>
                                                         <td>{product.category}</td>
                                                         <td>{product.expirationDate.toISOString().split('T')[0]}</td>
-                                                        <td>{product.priceByUn}</td>
                                                         <td>{product.quantity}</td>
                                                         <td>{product.un}</td>
-                                                        <td className='text-end' >{product.totalPrice} €</td>
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
@@ -176,7 +165,6 @@ export default function Inventory() {
                                         <h4 className='mb-4'>Inventory Details</h4>
                                         <h6><span className='fw-bold'>Start Date:</span> {startDate}</h6>
                                         <h6><span className='fw-bold'>Products: </span>{products.length}</h6>
-                                        <h6><span className='fw-bold'>Price: </span>{products.reduce((acc, product) => acc + product.totalPrice, 0)} €</h6>
                                     </div>
                                     <div>
                                         <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon  style={{width:'1rem'}} icon={faFileExcel}/> </button>
