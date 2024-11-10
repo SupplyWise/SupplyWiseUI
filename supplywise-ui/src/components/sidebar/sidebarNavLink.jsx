@@ -2,7 +2,7 @@ import { faFileInvoiceDollar, faWarehouse } from "@fortawesome/free-solid-svg-ic
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 
-export default function DashboardNavLink({ text, currentPage, selectedRestaurant }) {
+export default function SidebarLink({ text, currentPage, selectedRestaurant }) {
     var href = text.toLowerCase();
     href = "/management";
     if (text !== "Dashboard") {
