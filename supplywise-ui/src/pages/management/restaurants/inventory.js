@@ -13,7 +13,6 @@ export default function Inventory() {
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [barcodeInput, setBarcodeInput] = useState('');
-    const [itemToAdd, setItemToAdd] = useState(null);
     const [newItemStockFieldsVisible, setNewItemStockFieldsVisible] = useState(false);
     const [isItemAlreadyCreated, setIsItemAlreadyCreated] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', category: 'UNKNOWN' });
@@ -140,6 +139,7 @@ export default function Inventory() {
         console.log('Edit Product', id);
     }
 
+    /*
     const addNewProduct = () => {
         let barCodeNumber = document.getElementById('barCodeNumber').value;
         let quantity = document.getElementById('quantity').value;
@@ -159,12 +159,34 @@ export default function Inventory() {
         setProducts([...products, newProduct]);
         setIsAddProductModalOpen(false);
     }
+    */
 
     const endInventory = () => {
         console.log('End Inventory');
-        setInventoryOngoing(false);
-        setProducts([]);
-    }
+        let closeDate = inventoryOngoing.expectedClosingDate;
+        if (closeDate === null) {
+            closeDate = new Date().toISOString();
+        }
+        let inventoryId = inventoryOngoing.id;
+        fetch(`${API_URL}/inventories/${inventoryId}/close`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            },
+            body: JSON.stringify(closeDate),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to close inventory');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                setInventoryOngoing(null);
+            })
+            .catch((error) => console.error(error));
+    };
 
     const handleBarcodeInput = () => {
         fetch(`${API_URL}/item/barcode/${barcodeInput}`, {
@@ -319,7 +341,7 @@ export default function Inventory() {
                                             <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
                                         </div>
                                         <div className='row w-75'>
-                                            <button className='btn btn-secondary' onClick={() => endInventory()} >End Inventory</button>
+                                            <button className='btn btn-secondary' onClick={() => endInventory()} >Close Inventory</button>
                                         </div>
                                     </div>
                                 </div>
