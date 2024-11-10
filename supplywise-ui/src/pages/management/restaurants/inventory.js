@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { API_URL } from '../../../../api_url';
+import fa from 'fontawesome';
 
 export default function Inventory() {
 
@@ -11,6 +12,13 @@ export default function Inventory() {
     const [textFilter, setTextFilter] = useState('');
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
     const [products, setProducts] = useState([]);
+    const [barcodeInput, setBarcodeInput] = useState('');
+    const [itemToAdd, setItemToAdd] = useState(null);
+    const [newItemStockFieldsVisible, setNewItemStockFieldsVisible] = useState(false);
+    const [isItemAlreadyCreated, setIsItemAlreadyCreated] = useState(false);
+    const [newProduct, setNewProduct] = useState({ name: '', category: 'UNKNOWN' });
+    const [newItemStockQtt, setNewItemStockQtt] = useState(0);
+    const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
 
     useEffect(() => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
@@ -33,6 +41,7 @@ export default function Inventory() {
                     return;
                 }
                 setInventoryOngoing(JSON.parse(data)[0]);
+                console.log(JSON.parse(data)[0]);
             })
             .catch((error) => {
                 console.error(error);
@@ -157,6 +166,93 @@ export default function Inventory() {
         setProducts([]);
     }
 
+    const handleBarcodeInput = () => {
+        fetch(`${API_URL}/item/barcode/${barcodeInput}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            }
+        })
+            .then((response) => {
+                if (response.status === 404) {
+                    setIsItemAlreadyCreated(false);
+                    return;
+                } else if (response.ok) {
+                    setIsItemAlreadyCreated(true);
+                    return response.json();
+                } else {
+                    throw new Error('Failed to fetch product by barcode');
+                }
+            })
+            .then((data) => {
+                if (data) {
+                    setNewProduct(data);
+                } else {
+                    setNewProduct({ name: '', barCode: parseInt(barcodeInput), category: 'UNKNOWN' });
+                }
+                setNewItemStockFieldsVisible(true);
+            })
+            .catch((error) => console.error(error));
+    };
+
+    const addItemStock = () => {
+        console.log('Add Item Stock');
+        console.log(newProduct);
+        console.log(newItemStockQtt);
+        console.log(newItemStockExpirationDate);
+        console.log(isItemAlreadyCreated)
+
+        if (!isItemAlreadyCreated) {
+            // é preciso criar o item e só depois adicionar o itemStock
+            fetch(`${API_URL}/item/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                },
+                body: JSON.stringify(newProduct)
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to create item');
+                    }
+                    return response.json();
+                })
+                .catch((error) => console.error(error));
+        }
+
+        console.log(inventoryOngoing.id)
+
+        fetch(`${API_URL}/inventories/${inventoryOngoing.id}/item-stocks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            },
+            body: JSON.stringify({
+                barCode: newProduct.barCode,
+                expirationDate: newItemStockExpirationDate,
+                quantity: newItemStockQtt
+            })
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to create item stock');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                setNewItemStockFieldsVisible(false);
+                setNewItemStockQtt(0);
+                setNewItemStockExpirationDate(null);
+                setIsAddProductModalOpen(false);
+                setInventoryOngoing(data);
+
+            })
+            .catch((error) => console.error(error));
+
+    };
 
     return (
         <DashboardLayout>
@@ -179,25 +275,23 @@ export default function Inventory() {
                                                 <th scope="col">Category</th>
                                                 <th scope="col">Expiration Date</th>
                                                 <th scope="col">Quantity</th>
-                                                <th scope="col">Unit</th>
                                                 <th scope="col"></th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             {inventoryOngoing.itemStocks
                                                 .filter(product =>
-                                                    product.name.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.category.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.barCodeNumber.includes(textFilter)
+                                                    product.itemProperties.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                    product.itemProperties.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                    product.itemProperties.item.barCode.toString().includes(textFilter)
                                                 )
                                                 .map((product) => (
                                                     <tr key={product.id}>
-                                                        <td>{product.barCodeNumber}</td>
-                                                        <td>{product.name}</td>
-                                                        <td>{product.category}</td>
-                                                        <td>{product.expirationDate.toISOString().split('T')[0]}</td>
-                                                        <td>{product.quantity}</td>
-                                                        <td>{product.un}</td>
+                                                        <td>{product.itemProperties.item.barCode}</td>
+                                                        <td>{product.itemProperties.item.name}</td>
+                                                        <td>{product.itemProperties.item.category}</td>
+                                                        <td>{product.itemProperties.expirationDate}</td>
+                                                        <td>{product.itemProperties.quantity * product.quantity}</td>
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
@@ -265,30 +359,75 @@ export default function Inventory() {
                                     <h5 className="modal-title" id="exampleModalLabel">Add Product</h5>
                                     <button type="button" className="btn-close" onClick={() => setIsAddProductModalOpen(false)} aria-label="Close"></button>
                                 </div>
-                                <div className="modal-body">
+                                <div className="modal-body p-5">
                                     <form>
-                                        <div className="row">
-                                            <div className='col-9'>
-                                                <label htmlFor="barCodeNumber" className="form-label">Bar Code Number</label>
-                                                <input type="text" className="form-control" id="barCodeNumber" />
-                                            </div>
-                                            <div className='col-3'>
-                                                <label htmlFor="quantity" className="form-label">Quantity</label>
-                                                <input type="number" className="form-control" id="quantity" />
-                                            </div>
+                                        <div className="row mb-3">
+                                            <label htmlFor="barCodeNumber" className="form-label">Bar Code Number</label>
+                                            <input
+                                                type="text"
+                                                className="form-control"
+                                                id="barCodeNumber"
+                                                value={barcodeInput}
+                                                onChange={(e) => setBarcodeInput(e.target.value)}
+                                                style={{ width: '60%' }}
+                                            />
+                                            <button type="button" style={{ width: '30%' }} className="btn sw-bgcolor ms-4 mt-3" disabled={barcodeInput == ''} onClick={() => handleBarcodeInput()}>Search</button>
                                         </div>
-                                        <div className="row">
-                                            <div className='col-12'>
-                                                <label htmlFor="expirationDate" className="form-label">Expiration Date</label>
-                                                <input type="date" className="form-control" id="expirationDate" />
-                                            </div>
-                                        </div>
+
+                                        {newItemStockFieldsVisible && (
+                                            <>
+                                                <div className="row mb-3">
+                                                    <label htmlFor="productName" className="form-label">Product Name</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        disabled={isItemAlreadyCreated}
+                                                        id="productName"
+                                                        value={newProduct.name}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="row mb-3">
+                                                    <label htmlFor="productCategory" className="form-label">Category</label>
+                                                    <select
+                                                        disabled={isItemAlreadyCreated}
+                                                        className="form-control"
+                                                        id="productCategory"
+                                                        value={newProduct.category}
+                                                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                                                    >
+                                                        <option value="UNKNOWN">Select Category</option>
+                                                        <option value="DRINKABLE">Drinks</option>
+                                                        <option value="EATABLE">Food</option>
+                                                        <option value="CUSTOM">Other</option>
+                                                    </select>
+                                                </div>
+                                                <div className="row mb-3">
+                                                    <label htmlFor="quantity" className="form-label">Quantity</label>
+                                                    <input type="number" className="form-control" value={newItemStockQtt} onChange={(e) => setNewItemStockQtt(e.target.value)} />
+                                                </div>
+                                                <div className="row mb-3">
+                                                    <label htmlFor="expirationDate" className="form-label">Expiration Date</label>
+                                                    <input type="date" className="form-control" value={newItemStockExpirationDate} onChange={(e) => setNewItemStockExpirationDate(e.target.value)} />
+                                                </div>
+                                            </>
+                                        )}
+
                                     </form>
                                 </div>
-                                <div className="modal-footer">
-                                    <button type="button" className="btn btn-secondary" onClick={() => setIsAddProductModalOpen(false)}>Close</button>
-                                    <button type="button" className="btn sw-bgcolor" onClick={() => addNewProduct()}>Add Product</button>
-                                </div>
+                                {newItemStockFieldsVisible && (
+                                    <div className="modal-footer">
+                                        <button type="button" className="btn btn-secondary" onClick={() => setIsAddProductModalOpen(false)}>Close</button>
+                                        <button
+                                            type="button"
+                                            className="btn sw-bgcolor"
+                                            disabled={newItemStockQtt === 0 || newItemStockExpirationDate === null || newProduct.name === ''}
+                                            onClick={() => addItemStock()}
+                                        >
+                                            Add Item
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
