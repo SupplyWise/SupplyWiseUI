@@ -2,7 +2,8 @@
 import DashboardLayout from "@/components/managementLayout";
 import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { API_URL } from "../../../../api_url";
 
 export default function Restaurants() {
 
@@ -103,6 +104,32 @@ export default function Restaurants() {
     const [dateStart, setDateStart] = useState('')
     const [dateEnd, setDateEnd] = useState('')
     const [closedBy, setClosedBy] = useState('')
+    const [inventories, setInventories] = useState([])
+
+    useEffect(() => {
+        fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Failed to fetch inventories');
+                    return;
+                }
+                if (response.status === 204) {
+                    console.error('No inventories found');
+                    return;
+                }
+                return response.json()
+            })
+            .then(data => {
+                setInventories(data)
+            })
+    }, [])
+
 
 
     return (
@@ -112,12 +139,13 @@ export default function Restaurants() {
                     <div className='mt-3 row'>
                         <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row' }}>
                             <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                <label style={{width:'200%'}} className='form-label'>Filter by Date Interval</label>
-                                <input type="date" onChange={(e) => setDateStart(e.target.value)} className='form-control' />
-                                <input type="date" onChange={(e) => setDateEnd(e.target.value)} className='form-control' />
+                                <label style={{ width: '200%' }} className='form-label'>Filter by Date Interval</label>
+                                <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} className='form-control' />
+                                <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} className='form-control' />
+                                <button className='btn sw-bgcolor ms-2' onClick={() => { setDateStart(''); setDateEnd('') }}>Clear</button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'row' }}>
-                                <label style={{width:'200%'}} className='form-label'>Closed By</label>
+                                <label style={{ width: '200%' }} className='form-label'>Closed By</label>
                                 <select className='form-select' onChange={(e) => setClosedBy(e.target.value)}>
                                     <option selected value=''>All</option>
                                     {closers.map((closer) => (
@@ -130,32 +158,38 @@ export default function Restaurants() {
                             <thead>
                                 <tr>
                                     <th scope="col">Date Start</th>
-                                    <th scope="col">Date End</th>
+                                    <th scope="col">Date Close</th>
                                     <th scope="col">Number of Products</th>
                                     <th scope="col">Closed By</th>
                                     <th scope="col"></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {reports
-                                    .filter(report =>
-                                        (dateStart === '' || report.dateStart >= dateStart) &&
-                                        (dateEnd === '' || report.dateEnd <= dateEnd) &&
-                                        (closedBy === '' || report.closedBy === closedBy)
-                                    )
-                                    .map((report) => (
-                                        <tr key={report.id}>
-                                            <td>{report.dateStart}</td>
-                                            <td>{report.dateEnd}</td>
-                                            <td>{report.numProducts}</td>
-                                            <td>{report.closedBy}</td>
-                                            <td>
-                                                <button className='btn btn-success ms-2'>
-                                                    <FontAwesomeIcon style={{ width: '.9vw' }} icon={faDownload} />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                {inventories === undefined ?
+                                    <tr><td colSpan='5'>No inventories found</td></tr> :
+                                    <>
+                                        {inventories
+                                            .filter(inventory =>
+                                                inventory.closingDate !== null &&
+                                                (dateStart === '' || inventory.emissionDate >= dateStart) &&
+                                                (dateEnd === '' || inventory.closingDate <= dateEnd)
+                                                // && (closedBy === '' || inventory.closedBy === closedBy)
+                                            )
+                                            .map((inventory) => (
+                                                <tr key={inventory.id}>
+                                                    <td>{inventory.emissionDate.split('T')[0]}</td>
+                                                    <td>{inventory.closingDate.split('T')[0]}</td>
+                                                    <td>{inventory.itemStocks.length}</td>
+                                                    <td>{null}</td>
+                                                    <td>
+                                                        <button className='btn btn-success ms-2'>
+                                                            <FontAwesomeIcon style={{ width: '.9vw' }} icon={faDownload} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                    </>
+                                }
                             </tbody>
                         </table>
                     </div>
