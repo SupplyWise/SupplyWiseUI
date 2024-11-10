@@ -3,14 +3,41 @@ import React, { useEffect, useState } from 'react';
 import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { API_URL } from '../../../../api_url';
 
 export default function Inventory() {
 
-    const [isInventoryOngoing, setIsInventoryOngoing] = useState(false);
-    const [startDate, setStartDate] = useState(null);
+    const [inventoryOngoing, setInventoryOngoing] = useState(null);
     const [textFilter, setTextFilter] = useState('');
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
     const [products, setProducts] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            }
+        })
+            .then((response) => {
+                if (response.status === 204) {
+                    return;
+                }
+
+                return response.text();
+            })
+            .then((data) => {
+                if (!data) {
+                    setInventoryOngoing(null);
+                    return;
+                }
+                setInventoryOngoing(JSON.parse(data)[0]);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    }, []);
 
 
     useEffect(() => {
@@ -56,12 +83,39 @@ export default function Inventory() {
     }, []);
 
     const startInventory = () => {
-        let date = document.getElementById('date').value;
-        if (date === '') {
-            date = new Date().toISOString().split('T')[0];
+        let startDate = document.getElementById('startDate').value;
+        if (startDate === '') {
+            startDate = new Date().toISOString().split('T')[0];
         }
-        setStartDate(date);
-        setIsInventoryOngoing(true);
+        startDate += 'T00:00:00.000Z';
+
+        let endDate = document.getElementById('endDate').value;
+        if (endDate === '') {
+            endDate = null;
+        } else {
+            endDate += 'T23:59:59.999Z';
+        }
+
+        let restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
+
+        fetch(`${API_URL}/inventories/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            },
+            body: JSON.stringify({ emissionDate: startDate, expectedClosingDate: endDate, restaurantId: restaurantId }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to start inventory');
+                }
+                return response.json();
+            })
+            .then((inventory) => {
+                setInventoryOngoing(inventory);
+            })
+            .catch((error) => console.error(error));
     };
 
     const addProduct = () => {
@@ -78,7 +132,6 @@ export default function Inventory() {
     }
 
     const addNewProduct = () => {
-        console.log('Add New Product');
         let barCodeNumber = document.getElementById('barCodeNumber').value;
         let quantity = document.getElementById('quantity').value;
         let expirationDate = document.getElementById('expirationDate').value;
@@ -100,7 +153,7 @@ export default function Inventory() {
 
     const endInventory = () => {
         console.log('End Inventory');
-        setIsInventoryOngoing(false);
+        setInventoryOngoing(false);
         setProducts([]);
     }
 
@@ -109,10 +162,10 @@ export default function Inventory() {
         <DashboardLayout>
             <div style={{ padding: '20px' }}>
                 <div className="content">
-                    {isInventoryOngoing ? (
+                    {inventoryOngoing ? (
                         <div className='row'>
-                            <div className='col-10'>
-                                <h1 className='text-center' > Inventory in Progress</h1>
+                            <div className='col-9'>
+                                <h1 className='text-center'  > Inventory in Progress</h1>
                                 <div className='mt-3 row'>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <input type="text" placeholder='Search' onChange={(e) => setTextFilter(e.target.value)} />
@@ -131,7 +184,7 @@ export default function Inventory() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {products
+                                            {inventoryOngoing.itemStocks
                                                 .filter(product =>
                                                     product.name.toLowerCase().includes(textFilter.toLowerCase()) ||
                                                     product.category.toLowerCase().includes(textFilter.toLowerCase()) ||
@@ -159,16 +212,21 @@ export default function Inventory() {
                                     </table>
                                 </div>
                             </div>
-                            <div className='col-2'>
+                            <div className='col-3'>
                                 <div className='bg-dark text-white p-3 ms-5' style={{ height: '100%', width: '125%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                                    <div>
-                                        <h4 className='mb-4'>Inventory Details</h4>
-                                        <h6><span className='fw-bold'>Start Date:</span> {startDate}</h6>
-                                        <h6><span className='fw-bold'>Products: </span>{products.length}</h6>
+                                    <h4 className='text-center'>Inventory Details</h4>
+                                    <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.itemStocks.length} products)</h6>
+                                    <div className='text-end mt-2'>
+                                        <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
+                                        <h6><span className='fw-bold'>Closing Date:</span> {inventoryOngoing.expectedClosingDate === null ? 'Not Defined' : inventoryOngoing.expectedClosingDate.split('T')[0]}</h6>
                                     </div>
-                                    <div>
-                                        <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon  style={{width:'1rem'}} icon={faFileExcel}/> </button>
-                                        <button className='btn btn-secondary' onClick={() => endInventory()} >End Inventory</button>
+                                    <div className="d-flex flex-column align-items-center mt-4">
+                                        <div className='row w-75'>
+                                            <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
+                                        </div>
+                                        <div className='row w-75'>
+                                            <button className='btn btn-secondary' onClick={() => endInventory()} >End Inventory</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -178,13 +236,19 @@ export default function Inventory() {
                         <div>
                             <div>
                                 <h1 className='text-center' > No Inventory Ongoing</h1>
-                                <div className='mt-3' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-                                    <div className="form-group">
-                                        <label htmlFor="date">Date</label>
-                                        <input type="date" id="date" name="date" />
-                                    </div>
-                                    <div>
-                                        <button className='btn sw-bgcolor' onClick={() => startInventory()}>Start Inventory</button>
+                                <div className='mt-5' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
+                                    <div style={{ display: 'flex', width: '70%', justifyContent: 'space-between', flexDirection: 'row' }}>
+                                        <div>
+                                            <label htmlFor="date">Starting Date</label>
+                                            <input type="date" id="startDate" name="date" />
+                                        </div>
+                                        <div>
+                                            <label htmlFor="date">Expected Closing Date</label>
+                                            <input type="date" id="endDate" name="date" />
+                                        </div>
+                                        <div>
+                                            <button className='btn sw-bgcolor' onClick={() => startInventory()}>Start Inventory</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -6,7 +6,6 @@ import SidebarNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
 
 export default function Sidebar({ sessionUser }) {
-    console.log(sessionUser);
 
     const pages = ["Dashboard", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
@@ -17,7 +16,9 @@ export default function Sidebar({ sessionUser }) {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             setCurrentPage(window.location.pathname);
-            setSelectedRestaurant(sessionStorage.getItem('selectedRestaurant'));
+            if (sessionStorage.getItem('selectedRestaurant')) {
+                setSelectedRestaurant(JSON.parse(sessionStorage.getItem('selectedRestaurant')).name);
+            }
         }
     }, []);
 

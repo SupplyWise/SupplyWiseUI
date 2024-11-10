@@ -83,7 +83,7 @@ export default function Restaurants() {
         </div>
       </div>
 
-      {restaurants?.map(restaurant => <RestaurantCard key={restaurant.id} name={restaurant.name} creationDate={restaurant.createdAt} />)}
+      {restaurants?.map(restaurant => <RestaurantCard key={restaurant.id} id={restaurant.id} name={restaurant.name} creationDate={restaurant.createdAt} />)}
     </DashboardLayout>
   );
 }
