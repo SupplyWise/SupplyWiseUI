@@ -4,14 +4,12 @@ import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { API_URL } from '../../../../api_url';
-import fa from 'fontawesome';
 
 export default function Inventory() {
 
     const [inventoryOngoing, setInventoryOngoing] = useState(null);
     const [textFilter, setTextFilter] = useState('');
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
-    const [products, setProducts] = useState([]);
     const [barcodeInput, setBarcodeInput] = useState('');
     const [newItemStockFieldsVisible, setNewItemStockFieldsVisible] = useState(false);
     const [isItemAlreadyCreated, setIsItemAlreadyCreated] = useState(false);
@@ -48,47 +46,6 @@ export default function Inventory() {
     }, []);
 
 
-    useEffect(() => {
-        let productsInit = [
-            {
-                barCodeNumber: '123456789012',
-                id: 1,
-                name: 'water',
-                category: 'drinks',
-                expirationDate: new Date(),
-                quantity: 10,
-                un: 'kg',
-            },
-            {
-                barCodeNumber: '452454545454',
-                id: 2,
-                name: 'bread',
-                category: 'food',
-                expirationDate: new Date(),
-                quantity: 20,
-                un: 'kg',
-            },
-            {
-                barCodeNumber: '498874545454',
-                id: 3,
-                name: 'pork',
-                category: 'meat',
-                expirationDate: new Date(),
-                quantity: 30,
-                un: 'kg',
-            },
-            {
-                id: 4,
-                name: 'lettuce',
-                category: 'vegetables',
-                expirationDate: new Date(),
-                barCodeNumber: '498874545123',
-                quantity: 40,
-                un: 'kg',
-            },
-        ];
-        setProducts(productsInit);
-    }, []);
 
     const startInventory = () => {
         let startDate = document.getElementById('startDate').value;
@@ -139,27 +96,6 @@ export default function Inventory() {
         console.log('Edit Product', id);
     }
 
-    /*
-    const addNewProduct = () => {
-        let barCodeNumber = document.getElementById('barCodeNumber').value;
-        let quantity = document.getElementById('quantity').value;
-        let expirationDate = document.getElementById('expirationDate').value;
-        let priceByUn = Math.floor(Math.random() * 100);
-        let newProduct = {
-            barCodeNumber: barCodeNumber,
-            id: products.length + 1,
-            name: 'product' + parseInt(products.length + 1),
-            category: 'the category',
-            expirationDate: new Date(),
-            priceByUn: priceByUn,
-            quantity: quantity,
-            un: 'kg',
-            totalPrice: priceByUn * quantity
-        };
-        setProducts([...products, newProduct]);
-        setIsAddProductModalOpen(false);
-    }
-    */
 
     const endInventory = () => {
         console.log('End Inventory');
@@ -219,11 +155,6 @@ export default function Inventory() {
     };
 
     const addItemStock = () => {
-        console.log('Add Item Stock');
-        console.log(newProduct);
-        console.log(newItemStockQtt);
-        console.log(newItemStockExpirationDate);
-        console.log(isItemAlreadyCreated)
 
         if (!isItemAlreadyCreated) {
             // é preciso criar o item e só depois adicionar o itemStock
@@ -244,9 +175,7 @@ export default function Inventory() {
                 .catch((error) => console.error(error));
         }
 
-        console.log(inventoryOngoing.id)
-
-        fetch(`${API_URL}/inventories/${inventoryOngoing.id}/item-stocks`, {
+        fetch(`${API_URL}/inventories/${inventoryOngoing.id}/items`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -301,19 +230,19 @@ export default function Inventory() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {inventoryOngoing.itemStocks
+                                            {inventoryOngoing.items
                                                 .filter(product =>
-                                                    product.itemProperties.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.itemProperties.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.itemProperties.item.barCode.toString().includes(textFilter)
+                                                    product.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                    product.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                    product.item.barCode.toString().includes(textFilter)
                                                 )
                                                 .map((product) => (
                                                     <tr key={product.id}>
-                                                        <td>{product.itemProperties.item.barCode}</td>
-                                                        <td>{product.itemProperties.item.name}</td>
-                                                        <td>{product.itemProperties.item.category}</td>
-                                                        <td>{product.itemProperties.expirationDate}</td>
-                                                        <td>{product.itemProperties.quantity * product.quantity}</td>
+                                                        <td>{product.item.barCode}</td>
+                                                        <td>{product.item.name}</td>
+                                                        <td>{product.item.category}</td>
+                                                        <td>{product.expirationDate}</td>
+                                                        <td>{product.quantity}</td>
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
@@ -331,7 +260,7 @@ export default function Inventory() {
                             <div className='col-3'>
                                 <div className='bg-dark text-white p-3 ms-5' style={{ height: '100%', width: '125%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                     <h4 className='text-center'>Inventory Details</h4>
-                                    <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.itemStocks.length} products)</h6>
+                                    <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.items.length} products)</h6>
                                     <div className='text-end mt-2'>
                                         <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
                                         <h6><span className='fw-bold'>Closing Date:</span> {inventoryOngoing.expectedClosingDate === null ? 'Not Defined' : inventoryOngoing.expectedClosingDate.split('T')[0]}</h6>
