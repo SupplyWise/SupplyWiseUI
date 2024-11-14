@@ -9,22 +9,30 @@ export default function Restaurants() {
   const [restaurantToCreate, setRestaurantToCreate] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/restaurants/company/${JSON.parse(sessionStorage.getItem('loggedUser')).company.id}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+
+    const fetchRestaurants = async () => {
+      if (JSON.parse(sessionStorage.getItem('loggedUser')) && JSON.parse(sessionStorage.getItem('loggedUser')).company) {
+        fetch(`${API_URL}/restaurants/company/${JSON.parse(sessionStorage.getItem('loggedUser')).company.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+          }
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            setRestaurants(data);
+          })
+          .catch((error) => {
+            console.error(error);
+          }
+        );
       }
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setRestaurants(data);
-      })
-      .catch((error) => {
-        console.error(error);
-      }
-    );
+    };
+    fetchRestaurants();
+
+
 
   }, []);
 
