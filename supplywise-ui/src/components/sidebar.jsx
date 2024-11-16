@@ -41,8 +41,8 @@ export default function Sidebar({ sessionUser }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            paddingRight: '0px',
             boxShadow: '4px 0px 5px rgba(0, 0, 0, 0.2)',
+            overflowY: 'auto',
         }}>
             <div className='h-100'>
                 <div className='text-center bg-light'>
@@ -52,7 +52,7 @@ export default function Sidebar({ sessionUser }) {
                 </div>
                 <div className='row'>
                     {/* Nav Links */}
-                    <ul className="nav flex-column fs-4 fw-bold text-center">
+                    <ul className="nav flex-column fs-4 fw-bold text-center p-0">
                         <hr className="my-0" />
                         {pages.map((page, index) => (
                             <SidebarNavLink key={index} text={page} currentPage={currentPage} selectedRestaurant={selectedRestaurant} />
@@ -60,27 +60,31 @@ export default function Sidebar({ sessionUser }) {
                     </ul>
                 </div>
             </div>
-            
+
             {/* Alerts and Profile Section */}
-            <div className='row' style={{paddingLeft: "0px"}}>
-                <div className='col-12' style={{paddingLeft: "0px"}}>
-                    <hr/>
-                    <ul className="nav flex-column p-0 fs-4" style={{ padding: "10px" }}>
+            <div className='row' style={{ paddingLeft: "0px" }}>
+                <div className='col-12' style={{ paddingLeft: "0px" }}>
+                    <hr className='m-0'/>
+                    <ul className="nav flex-column p-0 fs-4">
                         <li className="nav-item">
+                            <div className='py-1' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
+                                <Link className="nav-link text-dark p-0" href="/alerts" style={{ display: 'flex', alignItems: 'center' }}>
+                                    <FontAwesomeIcon icon={faBell} style={{ width: '1.1vw', marginRight: '10px' }} />
+                                    <span style={{fontSize: '1.1vw'}}>Alerts</span>
+                                </Link>
+                                {numAlertas > 0 && <span className="badge bg-danger rounded-pill" style={{fontSize: '1.1vw'}}>{numAlertas}</span>}
+                            </div>
                         </li>
+                        <hr className='m-0'/>
                         <li className='nav-item'>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
-                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} onClick={() => goToProfile()}/>
+                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} onClick={() => goToProfile()} />
                                     {
                                         sessionUser !== null &&
                                         <span>{sessionUser.fullname}</span>
                                     }
                                 </div>
-                                <Link className="nav-link text-dark pr-1" href="/alerts" style={{ paddingRight: "3px", paddingBottom: "16px"}}>
-                                    {numAlertas > 0 && <span className="bell-alert bg-danger rounded-pill">{numAlertas}</span>}
-                                    <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', padding: '0 0 -5px 10px' }} />
-                                </Link>
                                 <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '1.5vw', cursor: 'pointer' }} onClick={() => logout()} />
                             </div>
                         </li>
