@@ -230,8 +230,9 @@ export default function Inventory() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {inventoryOngoing.items
-                                                .filter(product =>
+                                        {inventoryOngoing?.items?.length > 0 ? (
+                                            inventoryOngoing.items
+                                                ?.filter(product => 
                                                     product.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
                                                     product.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
                                                     product.item.barCode.toString().includes(textFilter)
@@ -252,7 +253,11 @@ export default function Inventory() {
                                                             </button>
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                ))
+                                        ) : (
+                                            <p>No items available.</p>
+                                        )}
+
                                         </tbody>
                                     </table>
                                 </div>
@@ -260,7 +265,9 @@ export default function Inventory() {
                             <div className='col-3'>
                                 <div className='bg-dark text-white p-3 ms-5' style={{ height: '100%', width: '125%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                     <h4 className='text-center'>Inventory Details</h4>
-                                    <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.items.length} products)</h6>
+                                    <h6 className='mb-4 text-center text-secondary'>
+                                        ({inventoryOngoing?.itemStocks?.length || 0} products)
+                                    </h6>
                                     <div className='text-end mt-2'>
                                         <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
                                         <h6><span className='fw-bold'>Closing Date:</span> {inventoryOngoing.expectedClosingDate === null ? 'Not Defined' : inventoryOngoing.expectedClosingDate.split('T')[0]}</h6>
