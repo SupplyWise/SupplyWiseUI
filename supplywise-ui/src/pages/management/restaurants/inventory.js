@@ -18,6 +18,13 @@ export default function Inventory() {
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
     const [minStockQuantity, setMinStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
+    const [userRole, setUserRole] = useState('');
+
+    // Fetch user role from session or context
+    useEffect(() => {
+        const role = sessionStorage.getItem('loggedUser').role;  // ????
+        setUserRole(role);
+    }, []);
 
     useEffect(() => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
@@ -109,10 +116,10 @@ export default function Inventory() {
             console.error("Minimum stock quantity cannot be empty or null");
             return;
         }
-    
+
         const updatedInventory = { ...inventoryOngoing };
         const productIndex = updatedInventory.items.findIndex(item => item.id === productId);
-    
+
         if (productIndex !== -1) {
             updatedInventory.items[productIndex].minStockQuantity = parseInt(newMinStock, 10);
             setInventoryOngoing(updatedInventory);
@@ -140,6 +147,7 @@ export default function Inventory() {
             console.error("Product not found in inventory");
         }
     };
+
     
 
     const endInventory = () => {
@@ -290,39 +298,33 @@ export default function Inventory() {
                                                         <td>{product.expirationDate}</td>
                                                         <td>{product.quantity}</td>
                                                         <td>
-                                                            {editingMinStock === product.id ? (
-                                                                <input
-                                                                    type="number"
-                                                                    value={minStockQuantity !== null ? minStockQuantity : product.minStockQuantity || ''}
-                                                                    onChange={(e) => setMinStockQuantity(e.target.value)}
-                                                                    onBlur={() => {
-                                                                        handleMinStockChange(product.id, minStockQuantity);
-                                                                        setEditingMinStock(null);
-                                                                    }}
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === 'Enter') {
-                                                                            handleMinStockChange(product.id, minStockQuantity);
-                                                                            setEditingMinStock(null);
-                                                                        }
-                                                                    }}
-                                                                    autoFocus
-                                                                />
-                                                            ) : (
+                                                            {userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER' ? (
                                                                 <>
-                                                                    <span>{product.minStockQuantity || 'N/A'}</span>
-                                                                    <button
-                                                                        className='btn btn-primary ms-2'
-                                                                        onClick={() => {
-                                                                            setEditingMinStock(product.id);
-                                                                            setMinStockQuantity(product.minStockQuantity || 0);
-                                                                        }}
-                                                                    >
-                                                                        <FontAwesomeIcon style={{ width: '.9vw' }} icon={faPencil} />
-                                                                    </button>
+                                                                    {editingMinStock === product.id ? (
+                                                                        <input
+                                                                            type="number"
+                                                                            value={minStockQuantity !== null ? minStockQuantity : product.minStockQuantity || ''}
+                                                                            onChange={(e) => setMinStockQuantity(e.target.value)}
+                                                                            onBlur={() => {
+                                                                                handleMinStockChange(product.id, minStockQuantity);
+                                                                                setEditingMinStock(null);
+                                                                            }}
+                                                                            onKeyDown={(e) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    handleMinStockChange(product.id, minStockQuantity);
+                                                                                    setEditingMinStock(null);
+                                                                                }
+                                                                            }}
+                                                                            autoFocus
+                                                                        />
+                                                                    ) : (
+                                                                        <span>{product.minStockQuantity || 'N/A'}</span>
+                                                                    )}
                                                                 </>
+                                                            ) : (
+                                                                <span>{product.minStockQuantity || 'N/A'}</span>
                                                             )}
                                                         </td>
-
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
