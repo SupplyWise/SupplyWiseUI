@@ -39,8 +39,14 @@ export default function Inventory() {
                     setInventoryOngoing(null);
                     return;
                 }
-                setInventoryOngoing(JSON.parse(data)[0]);
-                console.log(JSON.parse(data)[0]);
+                const inventory = JSON.parse(data)[0];
+
+                inventory.items = inventory.items.map(item => ({
+                    ...item,
+                    minStockQuantity: item.minStockQuantity || 0,
+                }));
+
+                setInventoryOngoing(inventory);
             })
             .catch((error) => {
                 console.error(error);
