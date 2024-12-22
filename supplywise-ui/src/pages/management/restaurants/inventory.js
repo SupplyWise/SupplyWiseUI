@@ -16,6 +16,8 @@ export default function Inventory() {
     const [newProduct, setNewProduct] = useState({ name: '', category: 'UNKNOWN' });
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
+    const [minStockQuantity, setMinStockQuantity] = useState(null);
+    const [editingMinStock, setEditingMinStock] = useState(null);
 
     useEffect(() => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
@@ -96,6 +98,43 @@ export default function Inventory() {
         console.log('Edit Product', id);
     }
 
+    const handleMinStockChange = (productId, newMinStock) => {
+        if (newMinStock === null || newMinStock === '') {
+            console.error("Minimum stock quantity cannot be empty or null");
+            return;
+        }
+    
+        const updatedInventory = { ...inventoryOngoing };
+        const productIndex = updatedInventory.items.findIndex(item => item.id === productId);
+    
+        if (productIndex !== -1) {
+            updatedInventory.items[productIndex].minStockQuantity = parseInt(newMinStock, 10);
+            setInventoryOngoing(updatedInventory);
+
+            fetch(`${API_URL}/inventories/${inventoryOngoing.id}/minimum-stock?id=${productId}&minimumStock=${newMinStock}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update minimum stock');
+                    }
+                    console.log(`Minimum stock for product ${productId} updated to ${newMinStock}`);
+                })
+                .catch(error => {
+                    console.error("Error updating minimum stock:", error);
+                    // Revert the change locally if backend update fails
+                    updatedInventory.items[productIndex].minStockQuantity = inventoryOngoing.items[productIndex].minStockQuantity;
+                    setInventoryOngoing(updatedInventory);
+                });
+        } else {
+            console.error("Product not found in inventory");
+        }
+    };
+    
 
     const endInventory = () => {
         console.log('End Inventory');
@@ -212,7 +251,7 @@ export default function Inventory() {
                     {inventoryOngoing ? (
                         <div className='row'>
                             <div className='col-9'>
-                                <h1 className='text-center'  > Inventory in Progress</h1>
+                                <h1 className='text-center'>Inventory in Progress</h1>
                                 <div className='mt-3 row'>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <input type="text" placeholder='Search' onChange={(e) => setTextFilter(e.target.value)} />
@@ -226,6 +265,7 @@ export default function Inventory() {
                                                 <th scope="col">Category</th>
                                                 <th scope="col">Expiration Date</th>
                                                 <th scope="col">Quantity</th>
+                                                <th scope="col">Minimum Quantity</th>
                                                 <th scope="col"></th>
                                             </tr>
                                         </thead>
@@ -243,6 +283,40 @@ export default function Inventory() {
                                                         <td>{product.item.category}</td>
                                                         <td>{product.expirationDate}</td>
                                                         <td>{product.quantity}</td>
+                                                        <td>
+                                                            {editingMinStock === product.id ? (
+                                                                <input
+                                                                    type="number"
+                                                                    value={minStockQuantity !== null ? minStockQuantity : product.minStockQuantity || ''}
+                                                                    onChange={(e) => setMinStockQuantity(e.target.value)}
+                                                                    onBlur={() => {
+                                                                        handleMinStockChange(product.id, minStockQuantity);
+                                                                        setEditingMinStock(null);
+                                                                    }}
+                                                                    onKeyDown={(e) => {
+                                                                        if (e.key === 'Enter') {
+                                                                            handleMinStockChange(product.id, minStockQuantity);
+                                                                            setEditingMinStock(null);
+                                                                        }
+                                                                    }}
+                                                                    autoFocus
+                                                                />
+                                                            ) : (
+                                                                <>
+                                                                    <span>{product.minStockQuantity || 'N/A'}</span>
+                                                                    <button
+                                                                        className='btn btn-primary ms-2'
+                                                                        onClick={() => {
+                                                                            setEditingMinStock(product.id);
+                                                                            setMinStockQuantity(product.minStockQuantity || 0);
+                                                                        }}
+                                                                    >
+                                                                        <FontAwesomeIcon style={{ width: '.9vw' }} icon={faPencil} />
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </td>
+
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
@@ -280,7 +354,7 @@ export default function Inventory() {
                     ) : (
                         <div>
                             <div>
-                                <h1 className='text-center' > No Inventory Ongoing</h1>
+                                <h1 className='text-center'>No Inventory Ongoing</h1>
                                 <div className='mt-5' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
                                     <div style={{ display: 'flex', width: '70%', justifyContent: 'space-between', flexDirection: 'row' }}>
                                         <div>
