@@ -34,12 +34,12 @@ export default function Navbar() {
                             </Link>
                         </li>
                         <li className="nav-item mx-0 mx-lg-1">
-                            <Link href="/register" className="register-button nav-link py-3 px-0 px-lg-3 rounded-pill border text-black fs-5 fw-bold">
+                            <Link href="https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/signup?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin&response_type=code&scope=email+openid+phone" className="register-button nav-link py-3 px-0 px-lg-3 rounded-pill border text-black fs-5 fw-bold">
                                 Register
                             </Link>
                         </li>
                         <li className="nav-item mx-0 mx-lg-1">
-                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded-pill sw-bgcolor text-white fs-5 fw-bold`} href="/login">
+                            <Link href="https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/login?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=http://localhost:3000/login&response_type=code&scope=email+openid+phone" className={`nav-link py-3 px-0 px-lg-3 rounded-pill sw-bgcolor text-white fs-5 fw-bold`}>
                                 Login
                             </Link>
                         </li>
