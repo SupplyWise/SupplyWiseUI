@@ -35,7 +35,7 @@ export default function Sidebar() {
 
     function logout() {
         sessionStorage.clear();
-        window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/logout?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=http://localhost:3000';
+        window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/logout?client_id=3p7arovt4ql7qasmbjg52u1qas&logout_uri=http://localhost:3000';
     }
 
     useEffect(() => {
