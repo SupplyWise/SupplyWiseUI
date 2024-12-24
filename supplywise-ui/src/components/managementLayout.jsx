@@ -2,6 +2,7 @@ import Sidebar from "./sidebar";
 import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../../api_url';
+import Cookies from 'js-cookie';
 
 export default function DashboardLayout({ children }) {
 
@@ -10,40 +11,58 @@ export default function DashboardLayout({ children }) {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            if (sessionStorage.getItem('loggedUser') === null) {
-                var token = sessionStorage.getItem('sessionToken');
-                fetch(`${API_URL}/users/email/${sessionStorage.getItem('email')}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
+            // Test to check if the backend is correctly handling Cognito tokens
+            let token = Cookies.get('access_token');
+            fetch(`${API_URL}/users/test-franchise_owner`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log(data);
                 })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        sessionStorage.setItem('loggedUser', JSON.stringify(data));
-                        setSessionUser(data);
-                        setCompanyDetails(data.company);
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                    });
-            } else {
-                setSessionUser(JSON.parse(sessionStorage.getItem('loggedUser')));
-                setCompanyDetails(JSON.parse(sessionStorage.getItem('loggedUser')).company);
-            }
+                .catch((error) => {
+                    console.error(error);
+                });
+
+
+            //if (sessionStorage.getItem('loggedUser') === null) {
+            //    var token = Cookies.get('access_token');
+            //    fetch(`${API_URL}/users/email/${sessionStorage.getItem('email')}`, {
+            //        method: 'GET',
+            //        headers: {
+            //            'Content-Type': 'application/json',
+            //            'Authorization': `Bearer ${token}`,
+            //        },
+            //    })
+            //        .then((response) => response.json())
+            //        .then((data) => {
+            //            sessionStorage.setItem('loggedUser', JSON.stringify(data));
+            //            setSessionUser(data);
+            //            setCompanyDetails(data.company);
+            //        })
+            //        .catch((error) => {
+            //            console.error(error);
+            //        });
+            //} else {
+            //    setSessionUser(JSON.parse(sessionStorage.getItem('loggedUser')));
+            //    setCompanyDetails(JSON.parse(sessionStorage.getItem('loggedUser')).company);
+            //}
         }
     }, []);
 
     const [companyToCreate, setCompanyToCreate] = useState('');
     const [restaurantToCreate, setRestaurantToCreate] = useState('');
-    
+
     const handleCompanyCreation = (e) => {
         e.preventDefault();
-    
+
         const token = sessionStorage.getItem('sessionToken');
         const email = sessionStorage.getItem('email');
-    
+
         fetch(`${API_URL}/company/create?name=${companyToCreate}`, {
             method: 'POST',
             headers: {
@@ -59,7 +78,7 @@ export default function DashboardLayout({ children }) {
             })
             .then((message) => {
                 console.log(message);
-    
+
                 // Fetch user data to get company information
                 return fetch(`${API_URL}/users/email/${email}`, {
                     method: 'GET',
