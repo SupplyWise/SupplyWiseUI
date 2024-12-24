@@ -40,7 +40,7 @@ export default function Restaurants() {
   const handleRestaurantCreation = (e) => {
     e.preventDefault();
 
-        fetch(`${API_URL}/restaurants/`, {
+        fetch(`${API_URL}/restaurants`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

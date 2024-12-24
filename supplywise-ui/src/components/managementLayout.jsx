@@ -12,26 +12,9 @@ export default function DashboardLayout({ children }) {
         if (typeof window !== 'undefined') {
 
             if (Cookies.get('access_token') === undefined) {
+                sessionStorage.clear();
                 window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/login?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=http://localhost:3000/login&response_type=code&scope=email+openid+phone';
             }
-
-            // Test to check if the backend is correctly handling Cognito tokens
-            let token = Cookies.get('access_token');
-            fetch(`${API_URL}/users/test-franchise_owner`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            })
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log(data);
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
-
 
             if (sessionStorage.getItem('company') === null) {
                 const token = Cookies.get('access_token');
@@ -130,7 +113,7 @@ export default function DashboardLayout({ children }) {
             console.log('Tokens refreshed successfully');
     
             // Step 3: Create the restaurant
-            const restaurantResponse = await fetch(`${API_URL}/restaurants/`, {
+            const restaurantResponse = await fetch(`${API_URL}/restaurants`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
