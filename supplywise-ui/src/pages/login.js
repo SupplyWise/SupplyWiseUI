@@ -26,7 +26,7 @@ const Login = () => {
 
                     // Store tokens in cookies
                     Cookies.set('access_token', access_token, { expires: expires_in / 86400 });
-                    Cookies.set('refresh_token', refresh_token, { expires: 365 });
+                    Cookies.set('refresh_token', refresh_token, { expires: 7 });
                     Cookies.set('username', username, { expires: expires_in / 86400 });
 
                     // Redirect to authenticated dashboard
