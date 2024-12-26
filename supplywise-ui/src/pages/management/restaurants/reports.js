@@ -4,6 +4,7 @@ import { faDownload } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState, useEffect } from "react";
 import { API_URL } from "../../../../api_url";
+import Cookies from "js-cookie";
 
 export default function Restaurants() {
 
@@ -111,7 +112,7 @@ export default function Restaurants() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             }
         })
             .then(response => {

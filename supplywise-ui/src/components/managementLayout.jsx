@@ -7,6 +7,7 @@ import Cookies from 'js-cookie';
 export default function DashboardLayout({ children }) {
 
     const [companyDetails, setCompanyDetails] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -58,6 +59,7 @@ export default function DashboardLayout({ children }) {
 
     const handleCompanyCreation = async (e) => {
         e.preventDefault();
+        setIsLoading(true); // Show the loader
     
         const token = Cookies.get('access_token');
         const refreshToken = Cookies.get('refresh_token'); // Assuming you store the refresh token in cookies
@@ -134,6 +136,8 @@ export default function DashboardLayout({ children }) {
     
         } catch (error) {
             console.error(`Error: ${error.message}`);
+        } finally {
+            setIsLoading(false); // Hide the loader
         }
     };
     
@@ -194,8 +198,19 @@ export default function DashboardLayout({ children }) {
                                                         required
                                                     />
                                                 </div>
-                                                <button type="submit" className="btn sw-bgcolor mt-3">Create</button>
+                                                <button type="submit" className="btn sw-bgcolor mt-3" disabled={isLoading}>
+                                                    {isLoading ? 'Creating...' : 'Create'}
+                                                </button>
                                             </form>
+
+                                            {isLoading && (
+                                                <div className="mt-3 text-center">
+                                                    <div className="spinner-border text-primary" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p>Processing your request...</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                             }
