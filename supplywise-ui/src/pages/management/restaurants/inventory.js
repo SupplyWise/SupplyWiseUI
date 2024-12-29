@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { API_URL } from '../../../../api_url';
+import Cookies from 'js-cookie';
 
 export default function Inventory() {
 
@@ -19,8 +20,35 @@ export default function Inventory() {
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
     const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
-    const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRole, setUserRole] = useState('');
+    const [minStockQuantity, setMinStockQuantity] = useState(null);
+    const [editingMinStock, setEditingMinStock] = useState(null);
+    const [userRoles, setUserRoles] = useState(null);
+
+    // Fetch user role from session or context
+    useEffect(() => {
+        const token = Cookies.get('access_token');
+        fetch(`${API_URL}/auth/roles`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Include the access token
+            },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user roles');
+                }
+                return response.text();
+            })
+            .then((data) => {
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim());
+                setUserRoles(rolesList);
+            })
+            .catch((error) => {
+                console.error("Error fetching company details:", error.message);
+            });
+    }, []);
 
     useEffect(() => {
         const loggedUser = sessionStorage.getItem('loggedUser');
@@ -42,7 +70,7 @@ export default function Inventory() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             }
         })
             .then((response) => {
@@ -81,11 +109,11 @@ export default function Inventory() {
 
         let restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
-        fetch(`${API_URL}/inventories/`, {
+        fetch(`${API_URL}/inventories`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
             body: JSON.stringify({ emissionDate: startDate, expectedClosingDate: endDate, restaurantId: restaurantId }),
         })
@@ -211,7 +239,7 @@ export default function Inventory() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 },
             })
                 .then(response => {
@@ -242,7 +270,7 @@ export default function Inventory() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
             body: JSON.stringify(closeDate),
         })
@@ -263,7 +291,7 @@ export default function Inventory() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             }
         })
             .then((response) => {
@@ -286,49 +314,6 @@ export default function Inventory() {
                 setNewItemStockFieldsVisible(true);
             })
             .catch((error) => console.error(error));
-    };
-
-    const addItemStock = async () => {
-        if (!isItemAlreadyCreated) {
-            if (!newProduct.name || !newProduct.barCode || !newProduct.category) {
-                console.error('Missing required fields for item creation');
-                return;
-            }
-    
-            const itemData = {
-                name: newProduct.name.trim(),
-                barCode: parseInt(barcodeInput),
-                category: newProduct.category,
-            };
-    
-            try {
-                const response = await fetch(`${API_URL}/item/create`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
-                    },
-                    body: JSON.stringify(itemData)
-                });
-    
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`Failed to create item: ${errorText}`);
-                }
-    
-                const createdItem = await response.json();
-                console.log('Item created successfully:', createdItem);
-    
-                // Proceed with creating the item stock
-                await createItemStock(createdItem);
-            } catch (error) {
-                console.error('Error creating item:', error);
-                return;
-            }
-        } else {
-            // If item already exists, proceed directly to creating stock
-            await createItemStock(newProduct);
-        }
     };
     
     const createItemStock = async (item) => {
@@ -361,6 +346,65 @@ export default function Inventory() {
         } catch (error) {
             console.error('Error creating item stock:', error);
         }
+    };
+
+    const addItemStockHelper = () => {
+        fetch(`${API_URL}/inventories/${inventoryOngoing.id}/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
+            },
+            body: JSON.stringify({
+                barCode: newProduct.barCode,
+                expirationDate: newItemStockExpirationDate,
+                quantity: newItemStockQtt
+            })
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to create item stock');
+                }
+                return response.json();
+            })
+            .then((data) => {
+                setNewItemStockFieldsVisible(false);
+                setNewItemStockQtt(0);
+                setNewItemStockExpirationDate(null);
+                setIsAddProductModalOpen(false);
+                setInventoryOngoing(data);
+
+            })
+            .catch((error) => console.error(error));
+    };
+
+    const addItemStock = () => {
+
+        console.log('Item creation status: ', isItemAlreadyCreated);
+        if (!isItemAlreadyCreated) {
+            // é preciso criar o item e só depois adicionar o itemStock
+            fetch(`${API_URL}/item/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
+                },
+                body: JSON.stringify(newProduct)
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to create item');
+                    }
+                    console.log('Item created');
+                    return response.json();
+                })
+                .then(addItemStockHelper)
+                .catch((error) => console.error(error));
+        }
+        else {
+            addItemStockHelper();
+        }
+
     };
 
     return (
