@@ -11,12 +11,16 @@ export default function Inventory() {
     const [inventoryOngoing, setInventoryOngoing] = useState(null);
     const [textFilter, setTextFilter] = useState('');
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
     const [barcodeInput, setBarcodeInput] = useState('');
     const [newItemStockFieldsVisible, setNewItemStockFieldsVisible] = useState(false);
     const [isItemAlreadyCreated, setIsItemAlreadyCreated] = useState(false);
     const [newProduct, setNewProduct] = useState({ name: '', category: 'UNKNOWN' });
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
+    const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
+    const [userRole, setUserRole] = useState('');
     const [minStockQuantity, setMinStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRoles, setUserRoles] = useState(null);
@@ -47,6 +51,21 @@ export default function Inventory() {
     }, []);
 
     useEffect(() => {
+        const loggedUser = sessionStorage.getItem('loggedUser');
+        if (loggedUser) {
+            const parsedUser = JSON.parse(loggedUser);
+            const role = parsedUser.role;
+            setUserRole(role);
+        } else {
+            console.error("No loggedUser found in sessionStorage.");
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchInventory();
+    }, []);
+
+    const fetchInventory = () => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
             method: 'GET',
             headers: {
@@ -55,10 +74,7 @@ export default function Inventory() {
             }
         })
             .then((response) => {
-                if (response.status === 204) {
-                    return;
-                }
-
+                if (response.status === 204) return;
                 return response.text();
             })
             .then((data) => {
@@ -67,19 +83,14 @@ export default function Inventory() {
                     return;
                 }
                 const inventory = JSON.parse(data)[0];
-
                 inventory.items = inventory.items.map(item => ({
                     ...item,
-                    minStockQuantity: item.minStockQuantity || 0,
+                    minimumStockQuantity: item.minimumStockQuantity || 0,
                 }));
-
                 setInventoryOngoing(inventory);
             })
-            .catch((error) => {
-                console.error(error);
-            });
-    }, []);
-
+            .catch((error) => console.error(error));
+    };
 
 
     const startInventory = () => {
@@ -123,13 +134,93 @@ export default function Inventory() {
         setIsAddProductModalOpen(true);
     }
 
-    const removeProduct = (id) => {
-        console.log('Remove Product', id);
-    }
+    const removeProduct = async (id) => {
+        if (!window.confirm('Are you sure you want to remove this item?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/item-properties/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                }
+            });
+
+            if (response.ok) {
+                // Update the local state by removing the deleted item
+                setInventoryOngoing(prev => ({
+                    ...prev,
+                    items: prev.items.filter(item => item.id !== id)
+                }));
+            } else {
+                throw new Error('Failed to delete item');
+            }
+        } catch (error) {
+            console.error('Error deleting item:', error);
+        }
+    };
 
     const editProduct = (id) => {
-        console.log('Edit Product', id);
-    }
+        const itemToEdit = inventoryOngoing.items.find(item => item.id === id);
+        setEditingItem(itemToEdit);
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSubmit = async () => {
+        const canEditMinimumStock = (userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER');
+    
+        try {
+            const response = await fetch(`${API_URL}/item-properties/${editingItem.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                },
+                body: JSON.stringify({
+                    item: {
+                        id: editingItem.item.id,
+                        name: editingItem.item.name,
+                        barCode: editingItem.item.barCode,
+                        category: editingItem.item.category,
+                    },
+                    expirationDate: editingItem.expirationDate,
+                    quantity: editingItem.quantity,
+                    minimumStockQuantity: editingItem.minimumStockQuantity, // Correct field name
+                    canEditMinimumStock: canEditMinimumStock,
+                })
+            });
+
+            console.log(JSON.stringify({
+                item: {
+                    id: editingItem.item.id,
+                    name: editingItem.item.name,
+                    barCode: editingItem.item.barCode,
+                    category: editingItem.item.category,
+                },
+                expirationDate: editingItem.expirationDate,
+                quantity: editingItem.quantity,
+                minimumStockQuantity: editingItem.minimumStockQuantity,
+                canEditMinimumStock: canEditMinimumStock,
+            }))
+    
+            if (response.ok) {
+                const updatedItem = await response.json();
+                setInventoryOngoing(prev => ({
+                    ...prev,
+                    items: prev.items.map(item =>
+                        item.id === editingItem.id ? updatedItem : item
+                    )
+                }));
+                setIsEditModalOpen(false);
+                setEditingItem(null);
+            } else {
+                throw new Error('Failed to update item');
+            }
+        } catch (error) {
+            console.error('Error updating item:', error);
+        }
+    };
 
     const handleMinStockChange = (productId, newMinStock) => {
         if (newMinStock === null || newMinStock === '') {
@@ -141,7 +232,7 @@ export default function Inventory() {
         const productIndex = updatedInventory.items.findIndex(item => item.id === productId);
 
         if (productIndex !== -1) {
-            updatedInventory.items[productIndex].minStockQuantity = parseInt(newMinStock, 10);
+            updatedInventory.items[productIndex].minimumStockQuantity = parseInt(newMinStock, 10);
             setInventoryOngoing(updatedInventory);
 
             fetch(`${API_URL}/inventories/${inventoryOngoing.id}/minimum-stock?id=${productId}&minimumStock=${newMinStock}`, {
@@ -160,15 +251,13 @@ export default function Inventory() {
                 .catch(error => {
                     console.error("Error updating minimum stock:", error);
                     // Revert the change locally if backend update fails
-                    updatedInventory.items[productIndex].minStockQuantity = inventoryOngoing.items[productIndex].minStockQuantity;
+                    updatedInventory.items[productIndex].minimumStockQuantity = inventoryOngoing.items[productIndex].minimumStockQuantity;
                     setInventoryOngoing(updatedInventory);
                 });
         } else {
             console.error("Product not found in inventory");
         }
-    };
-
-    
+    };   
 
     const endInventory = () => {
         console.log('End Inventory');
@@ -225,6 +314,38 @@ export default function Inventory() {
                 setNewItemStockFieldsVisible(true);
             })
             .catch((error) => console.error(error));
+    };
+    
+    const createItemStock = async (item) => {
+        try {
+            const stockData = {
+                barCode: item.barCode,
+                expirationDate: newItemStockExpirationDate,
+                quantity: parseInt(newItemStockQtt)
+            };
+    
+            const response = await fetch(`${API_URL}/inventories/${inventoryOngoing.id}/items`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                },
+                body: JSON.stringify(stockData)
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to create item stock');
+            }
+    
+            const data = await response.json();
+            setNewItemStockFieldsVisible(false);
+            setNewItemStockQtt(0);
+            setNewItemStockExpirationDate(null);
+            setIsAddProductModalOpen(false);
+            setInventoryOngoing(data);
+        } catch (error) {
+            console.error('Error creating item stock:', error);
+        }
     };
 
     const addItemStockHelper = () => {
@@ -312,57 +433,135 @@ export default function Inventory() {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {inventoryOngoing.items
-                                                .filter(product =>
-                                                    product.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
-                                                    product.item.barCode.toString().includes(textFilter)
-                                                )
-                                                .map((product) => (
-                                                    <tr key={product.id}>
-                                                        <td>{product.item.barCode}</td>
-                                                        <td>{product.item.name}</td>
-                                                        <td>{product.item.category}</td>
-                                                        <td>{product.expirationDate}</td>
-                                                        <td>{product.quantity}</td>
-                                                        <td>
-                                                            {userRoles.includes('ROLE_MANAGER_MASTER') || userRoles.includes('ROLE_FRANCHISE_OWNER') ? (
-                                                                <>
-                                                                    {editingMinStock === product.id ? (
-                                                                        <input
-                                                                            type="number"
-                                                                            value={minStockQuantity !== null ? minStockQuantity : product.minStockQuantity || ''}
-                                                                            onChange={(e) => setMinStockQuantity(e.target.value)}
-                                                                            onBlur={() => {
-                                                                                handleMinStockChange(product.id, minStockQuantity);
+                                        {inventoryOngoing.items
+                                            .filter(product =>
+                                                product.item.name.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                product.item.category.toLowerCase().includes(textFilter.toLowerCase()) ||
+                                                product.item.barCode.toString().includes(textFilter)
+                                            )
+                                            .map((product) => (
+                                                <tr key={product.id}>
+                                                    <td>{product.item.barCode}</td>
+                                                    <td>{product.item.name}</td>
+                                                    <td>{product.item.category}</td>
+                                                    <td>{product.expirationDate}</td>
+                                                    <td>{product.quantity}</td>
+                                                    <td>
+                                                        {userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER' ? (
+                                                            <>
+                                                                {editingMinStock === product.id ? (
+                                                                    <input
+                                                                        type="number"
+                                                                        value={minimumStockQuantity !== null ? minimumStockQuantity : product.minimumStockQuantity || ''}
+                                                                        onChange={(e) => setminimumStockQuantity(e.target.value)}
+                                                                        onBlur={() => {
+                                                                            handleMinStockChange(product.id, minimumStockQuantity);
+                                                                            setEditingMinStock(null);
+                                                                        }}
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter') {
+                                                                                handleMinStockChange(product.id, minimumStockQuantity);
                                                                                 setEditingMinStock(null);
-                                                                            }}
-                                                                            onKeyDown={(e) => {
-                                                                                if (e.key === 'Enter') {
-                                                                                    handleMinStockChange(product.id, minStockQuantity);
-                                                                                    setEditingMinStock(null);
-                                                                                }
-                                                                            }}
-                                                                            autoFocus
-                                                                        />
-                                                                    ) : (
-                                                                        <span>{product.minStockQuantity || 'N/A'}</span>
-                                                                    )}
-                                                                </>
-                                                            ) : (
-                                                                <span>{product.minStockQuantity || 'N/A'}</span>
-                                                            )}
-                                                        </td>
-                                                        <td>
-                                                            <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
-                                                                <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
-                                                            </button>
-                                                            <button className='btn btn-primary ms-2' onClick={() => editProduct(product.id)}>
-                                                                <FontAwesomeIcon style={{ width: '.9vw' }} icon={faPencil} />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                                            }
+                                                                        }}
+                                                                        autoFocus
+                                                                    />
+                                                                ) : (
+                                                                    <span>{product.minimumStockQuantity || 'N/A'}</span>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <span>{product.minimumStockQuantity || 'N/A'}</span>
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            className='btn btn-danger' 
+                                                            onClick={() => removeProduct(product.id)}
+                                                            title="Delete Item"
+                                                        >
+                                                            <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
+                                                        </button>
+                                                        <button 
+                                                            className='btn btn-primary ms-2' 
+                                                            onClick={() => editProduct(product.id)}
+                                                            title="Edit Item"
+                                                        >
+                                                            <FontAwesomeIcon style={{ width: '.9vw' }} icon={faPencil} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+
+                                        {isEditModalOpen && editingItem && (
+                                            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content">
+                                                        <div className="modal-header">
+                                                            <h5 className="modal-title">Edit Item</h5>
+                                                            <button type="button" className="btn-close" onClick={() => {
+                                                                setIsEditModalOpen(false);
+                                                                setEditingItem(null);
+                                                            }}></button>
+                                                        </div>
+                                                        <div className="modal-body">
+                                                            <div className="mb-3">
+                                                                <label className="form-label">Quantity</label>
+                                                                <input
+                                                                    type="number"
+                                                                    className="form-control"
+                                                                    value={editingItem.quantity}
+                                                                    onChange={(e) => setEditingItem({
+                                                                        ...editingItem,
+                                                                        quantity: parseInt(e.target.value)
+                                                                    })}
+                                                                />
+                                                            </div>
+                                                            <div className="mb-3">
+                                                                <label className="form-label">Expiration Date</label>
+                                                                <input
+                                                                    type="date"
+                                                                    className="form-control"
+                                                                    value={editingItem.expirationDate}
+                                                                    onChange={(e) => setEditingItem({
+                                                                        ...editingItem,
+                                                                        expirationDate: e.target.value
+                                                                    })}
+                                                                />
+                                                            </div>
+                                                            <div className="mb-3">
+                                                                <label className="form-label">Minimum Quantity</label>
+                                                                {userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER' ? (
+                                                                    <input
+                                                                        type="number"
+                                                                        className="form-control"
+                                                                        value={editingItem.minimumStockQuantity || ''}
+                                                                        onChange={(e) => setEditingItem({
+                                                                            ...editingItem,
+                                                                            minimumStockQuantity: parseInt(e.target.value, 10)
+                                                                        })}
+                                                                    />
+                                                                ) : (
+                                                                    <input
+                                                                        type="number"
+                                                                        className="form-control"
+                                                                        value={editingItem.minimumStockQuantity || ''}
+                                                                        disabled
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="modal-footer">
+                                                            <button type="button" className="btn btn-secondary" onClick={() => {
+                                                                setIsEditModalOpen(false);
+                                                                setEditingItem(null);
+                                                            }}>Cancel</button>
+                                                            <button type="button" className="btn btn-primary" onClick={handleEditSubmit}>Save Changes</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                         </tbody>
                                     </table>
                                 </div>
