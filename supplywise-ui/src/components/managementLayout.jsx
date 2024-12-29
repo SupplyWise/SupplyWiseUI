@@ -2,111 +2,145 @@ import Sidebar from "./sidebar";
 import Head from 'next/head';
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../../api_url';
+import Cookies from 'js-cookie';
 
 export default function DashboardLayout({ children }) {
 
     const [companyDetails, setCompanyDetails] = useState(null);
-    const [sessionUser, setSessionUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            if (sessionStorage.getItem('loggedUser') === null) {
-                var token = sessionStorage.getItem('sessionToken');
-                fetch(`${API_URL}/users/email/${sessionStorage.getItem('email')}`, {
+
+            if (Cookies.get('access_token') === undefined) {
+                sessionStorage.clear();
+                window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/login?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=http://localhost:3000/login&response_type=code&scope=email+openid+phone';
+            }
+
+            if (sessionStorage.getItem('company') === null) {
+                const token = Cookies.get('access_token');
+                fetch(`${API_URL}/company/details`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
+                        'Authorization': `Bearer ${token}`, // Include the access token
                     },
                 })
-                    .then((response) => response.json())
+                    .then((response) => {
+                        if (!response.ok) {
+                            // Handle specific HTTP errors
+                            if (response.status === 403) {
+                                throw new Error("User is not eligible to view company details.");
+                            } else if (response.status === 404) {
+                                throw new Error("Company not found.");
+                            } else {
+                                throw new Error("An error occurred while fetching company details.");
+                            }
+                        }
+                        console.log(response);
+                        return response.json(); // Parse response JSON if successful
+                    })
                     .then((data) => {
-                        sessionStorage.setItem('loggedUser', JSON.stringify(data));
-                        setSessionUser(data);
-                        setCompanyDetails(data.company);
+                        const company = data; // Convert string response to JSON if needed
+                        setCompanyDetails(company); // Set the company details
+                        sessionStorage.setItem('company', JSON.stringify(company)); // Cache company details in sessionStorage
                     })
                     .catch((error) => {
-                        console.error(error);
+                        console.error("Error fetching company details:", error.message);
                     });
             } else {
-                setSessionUser(JSON.parse(sessionStorage.getItem('loggedUser')));
-                setCompanyDetails(JSON.parse(sessionStorage.getItem('loggedUser')).company);
-            }
+                setCompanyDetails(JSON.parse(sessionStorage.getItem('company'))); // Use cached company details
+            }                
         }
     }, []);
 
     const [companyToCreate, setCompanyToCreate] = useState('');
     const [restaurantToCreate, setRestaurantToCreate] = useState('');
-    
-    const handleCompanyCreation = (e) => {
-        e.preventDefault();
-    
-        const token = sessionStorage.getItem('sessionToken');
-        const email = sessionStorage.getItem('email');
-    
-        fetch(`${API_URL}/company/create?name=${companyToCreate}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to create company');
-                }
-                return response.text();
-            })
-            .then((message) => {
-                console.log(message);
-    
-                // Fetch user data to get company information
-                return fetch(`${API_URL}/users/email/${email}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-            })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user data');
-                }
-                return response.json();
-            })
-            .then((data) => {
-                const company = data.company;
-                console.log(company);
-                if (company !== null) {
-                    // Create restaurant only if the company exists
-                    return fetch(`${API_URL}/restaurants/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        body: JSON.stringify({ name: restaurantToCreate, company: company }),
-                    });
-                } else {
-                    throw new Error('Company does not exist');
-                }
-            })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to create restaurant');
-                }
-                return response.text();
-            })
-            .then((message) => {
-                console.log(message);
-                sessionStorage.removeItem('loggedUser');
-                // Optionally, reload or navigate after success
-                window.location.reload();
-            })
-            .catch((error) => console.error(error));
-    };
 
+    const handleCompanyCreation = async (e) => {
+        e.preventDefault();
+        setIsLoading(true); // Show the loader
+    
+        const token = Cookies.get('access_token');
+        const refreshToken = Cookies.get('refresh_token'); // Assuming you store the refresh token in cookies
+    
+        try {
+            // Step 1: Create the company
+            const companyResponse = await fetch(`${API_URL}/company/create?name=${companyToCreate}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+    
+            if (!companyResponse.ok) {
+                throw new Error('Failed to create company');
+            }
+    
+            const company = await companyResponse.json(); // Assuming the API returns company data
+    
+            if (!company) {
+                throw new Error('Company creation failed: No company data returned');
+            }
+
+            setCompanyDetails(company);
+            sessionStorage.setItem('company', JSON.stringify(company));
+    
+            console.log(`Company created: ${JSON.stringify(company)}`);
+    
+            // Step 2: Refresh the tokens
+            // TODO : Change to general API URL when in production
+            const tokenResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/auth/refresh`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+            });
+    
+            if (!tokenResponse.ok) {
+                throw new Error('Failed to refresh tokens');
+            }
+    
+            const tokenData = await tokenResponse.json();
+
+            const { access_token, refresh_token, expires_in, username } = JSON.parse(tokenData.body);
+
+            // Store tokens in cookies
+            Cookies.set('access_token', access_token, { expires: expires_in / 86400 });
+            Cookies.set('refresh_token', refresh_token, { expires: 7 });
+            Cookies.set('username', username, { expires: expires_in / 86400 });
+    
+            console.log('Tokens refreshed successfully');
+    
+            // Step 3: Create the restaurant
+            const restaurantResponse = await fetch(`${API_URL}/restaurants`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${access_token}`, // Use refreshed access token
+                },
+                body: JSON.stringify({ name: restaurantToCreate, company: company }),
+            });
+    
+            if (!restaurantResponse.ok) {
+                throw new Error('Failed to create restaurant');
+            }
+    
+            const restaurantMessage = await restaurantResponse.text();
+            console.log(`Restaurant created: ${restaurantMessage}`);
+    
+            // Reload
+            window.location.reload();
+    
+        } catch (error) {
+            console.error(`Error: ${error.message}`);
+        } finally {
+            setIsLoading(false); // Hide the loader
+        }
+    };
+    
 
     return (
         <main>
@@ -119,7 +153,7 @@ export default function DashboardLayout({ children }) {
 
             <div className="container-fluid" style={{ padding: '0px', height: '100vh', width: '100vw' }}>
                 <div className="row" style={{ margin: 0 }}>
-                    <Sidebar sessionUser={sessionUser} />
+                    <Sidebar />
                     <div className="col-10" style={{ overflowY: 'auto', height: '100vh' }}>
                         <div className="container">
                             {
@@ -164,8 +198,19 @@ export default function DashboardLayout({ children }) {
                                                         required
                                                     />
                                                 </div>
-                                                <button type="submit" className="btn sw-bgcolor mt-3">Create</button>
+                                                <button type="submit" className="btn sw-bgcolor mt-3" disabled={isLoading}>
+                                                    {isLoading ? 'Creating...' : 'Create'}
+                                                </button>
                                             </form>
+
+                                            {isLoading && (
+                                                <div className="mt-3 text-center">
+                                                    <div className="spinner-border text-primary" role="status">
+                                                        <span className="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p>Processing your request...</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </>
                             }

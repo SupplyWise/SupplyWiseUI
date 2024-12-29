@@ -1,124 +1,93 @@
-import Head from 'next/head';
-import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { API_URL } from '../../api_url';
+import { useEffect } from 'react';
+import Cookies from 'js-cookie'; // Import js-cookie
+//import { API_URL } from '../components/api_url';
+import Head from 'next/head';
 
-export default function Login() {
+const Login = () => {
     const router = useRouter();
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    useEffect(() => {
+        const { code } = router.query;
 
-    const [forgotPassword, setForgotPassword] = useState(false);
-
-    const handleLogin = () => {
-        document.getElementById('login-error').classList.add('visually-hidden');
-        try {
-            fetch(`${API_URL}/auth/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+        if (code) {
+            // TODO - replace with general API URL when in production
+            fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/auth/tokens`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({ code }),
             })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(response.statusText || 'HTTP error, status = ' + response.status);
-                    }
-                    return response.json();
-                })
-                .then((data) => {
-                    sessionStorage.setItem('sessionToken', data.token);
-                    sessionStorage.setItem('email', email);
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Token exchange successful", data);
+                    const { access_token, refresh_token, expires_in, username } = JSON.parse(data.body);
+
+                    // Store tokens in cookies
+                    Cookies.set('access_token', access_token, { expires: expires_in / 86400 });
+                    Cookies.set('refresh_token', refresh_token, { expires: 7 });
+                    Cookies.set('username', username, { expires: expires_in / 86400 });
+
+                    // Redirect to authenticated dashboard
                     router.push('/management');
                 })
-                .catch((error) => {
-                    console.error(error);
-                    const loginError = document.getElementById('login-error');
-                    loginError.classList.remove('visually-hidden');
-                });
-
-
-        } catch (error) {
-            console.error(error);
-            const loginError = document.getElementById('login-error');
-            loginError.classList.remove('visually-hidden');
+                .catch(error => console.error("Token exchange failed", error));
         }
-    };
+    }, [router.query, router]);
 
     return (
-        <main>
+        <>
             <Head>
-                <title>Supplywise | Login</title>
-                <meta name="description" content="Login in SupplyWise" />
+                <title>Authenticating...</title>
+                <meta name="description" content="SupplyWise application" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <link rel="icon" href="/Logo_Icon.png" />
+                <link rel="icon" href="/favicon.ico" />
             </Head>
-            <div className="container d-flex justify-content-center align-items-center vh-100">
-                {!forgotPassword ? (
-                    <div className="card p-4 shadow-lg" style={{ width: '400px' }}>
-                        <h2 className="text-center mb-4">Sign In</h2>
-                        <form>
-                            <div className="form-group mb-3">
-                                <input
-                                    type="email"
-                                    className="form-control"
-                                    id="email"
-                                    placeholder="E-mail"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="form-group mb-4">
-                                <input
-                                    type="password"
-                                    className="form-control"
-                                    id="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div id="login-error" className='visually-hidden text-danger'>
-                                &nbsp;
-                                <span>Invalid credentials</span>
-                            </div>
-                            <button type="button" onClick={handleLogin} className="btn text-white border-0 sw-bgcolor w-100">Login</button>
-                        </form>
-                        <div className="mt-3 text-center">
-                            <span className="sw-color forgot-password" onClick={() => setForgotPassword(true)}>Forgot password?</span>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="card p-4 shadow-lg" style={{ width: '400px' }}>
-                        <h2 className="text-center mb-4">Forgot Password</h2>
-                        <form onSubmit={handleLogin}>
-                            <div className="form-group mb-3">
-                                <input
-                                    type="email"
-                                    className="form-control"
-                                    id="email"
-                                    placeholder="E-mail"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="btn text-white border-0 sw-bgcolor w-100">Submit</button>
-                        </form>
-                        <div className="mt-3 mb-2 text-center">
-                            <span className="sw-color forgot-password" onClick={() => setForgotPassword(false)}>Back to Login</span>
-                        </div>
-                        <p className="text-center mt-5">
-                            Don't have an account?{' '}
-                            <Link href="/register" className="text-black sw-color fw-bold">
-                                Register
-                            </Link>
-                        </p>
-                    </div>
-                )}
+            <div style={styles.container}>
+                <div style={styles.spinner}></div>
+                <p style={styles.message}>Authenticating... Please wait.</p>
             </div>
-        </main>
+        </>
     );
+};
+
+const styles = {
+    container: {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        backgroundColor: '#f4f4f9',
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+    },
+    spinner: {
+        width: '50px',
+        height: '50px',
+        border: '6px solid #ddd',
+        borderTop: '6px solid #0070f3',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+    },
+    message: {
+        marginTop: '20px',
+        fontSize: '18px',
+        color: '#333',
+    },
+};
+
+// Add keyframes for spinner animation
+if (typeof document !== "undefined") {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    `;
+    document.head.append(style);
 }
+
+export default Login;

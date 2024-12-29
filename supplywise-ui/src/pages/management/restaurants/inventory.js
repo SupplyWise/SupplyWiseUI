@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileExcel, faPencil, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { API_URL } from '../../../../api_url';
+import Cookies from 'js-cookie';
 
 export default function Inventory() {
 
@@ -16,13 +17,41 @@ export default function Inventory() {
     const [newProduct, setNewProduct] = useState({ name: '', category: 'UNKNOWN' });
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
+    const [minStockQuantity, setMinStockQuantity] = useState(null);
+    const [editingMinStock, setEditingMinStock] = useState(null);
+    const [userRoles, setUserRoles] = useState(null);
+
+    // Fetch user role from session or context
+    useEffect(() => {
+        const token = Cookies.get('access_token');
+        fetch(`${API_URL}/auth/roles`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Include the access token
+            },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user roles');
+                }
+                return response.text();
+            })
+            .then((data) => {
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim());
+                setUserRoles(rolesList);
+            })
+            .catch((error) => {
+                console.error("Error fetching company details:", error.message);
+            });
+    }, []);
 
     useEffect(() => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             }
         })
             .then((response) => {
@@ -37,8 +66,14 @@ export default function Inventory() {
                     setInventoryOngoing(null);
                     return;
                 }
-                setInventoryOngoing(JSON.parse(data)[0]);
-                console.log(JSON.parse(data)[0]);
+                const inventory = JSON.parse(data)[0];
+
+                inventory.items = inventory.items.map(item => ({
+                    ...item,
+                    minStockQuantity: item.minStockQuantity || 0,
+                }));
+
+                setInventoryOngoing(inventory);
             })
             .catch((error) => {
                 console.error(error);
@@ -63,11 +98,11 @@ export default function Inventory() {
 
         let restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
-        fetch(`${API_URL}/inventories/`, {
+        fetch(`${API_URL}/inventories`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
             body: JSON.stringify({ emissionDate: startDate, expectedClosingDate: endDate, restaurantId: restaurantId }),
         })
@@ -96,6 +131,44 @@ export default function Inventory() {
         console.log('Edit Product', id);
     }
 
+    const handleMinStockChange = (productId, newMinStock) => {
+        if (newMinStock === null || newMinStock === '') {
+            console.error("Minimum stock quantity cannot be empty or null");
+            return;
+        }
+
+        const updatedInventory = { ...inventoryOngoing };
+        const productIndex = updatedInventory.items.findIndex(item => item.id === productId);
+
+        if (productIndex !== -1) {
+            updatedInventory.items[productIndex].minStockQuantity = parseInt(newMinStock, 10);
+            setInventoryOngoing(updatedInventory);
+
+            fetch(`${API_URL}/inventories/${inventoryOngoing.id}/minimum-stock?id=${productId}&minimumStock=${newMinStock}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
+                },
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to update minimum stock');
+                    }
+                    console.log(`Minimum stock for product ${productId} updated to ${newMinStock}`);
+                })
+                .catch(error => {
+                    console.error("Error updating minimum stock:", error);
+                    // Revert the change locally if backend update fails
+                    updatedInventory.items[productIndex].minStockQuantity = inventoryOngoing.items[productIndex].minStockQuantity;
+                    setInventoryOngoing(updatedInventory);
+                });
+        } else {
+            console.error("Product not found in inventory");
+        }
+    };
+
+    
 
     const endInventory = () => {
         console.log('End Inventory');
@@ -108,7 +181,7 @@ export default function Inventory() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
             body: JSON.stringify(closeDate),
         })
@@ -129,7 +202,7 @@ export default function Inventory() {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             }
         })
             .then((response) => {
@@ -154,32 +227,12 @@ export default function Inventory() {
             .catch((error) => console.error(error));
     };
 
-    const addItemStock = () => {
-
-        if (!isItemAlreadyCreated) {
-            // é preciso criar o item e só depois adicionar o itemStock
-            fetch(`${API_URL}/item/create`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
-                },
-                body: JSON.stringify(newProduct)
-            })
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error('Failed to create item');
-                    }
-                    return response.json();
-                })
-                .catch((error) => console.error(error));
-        }
-
+    const addItemStockHelper = () => {
         fetch(`${API_URL}/inventories/${inventoryOngoing.id}/items`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
             body: JSON.stringify({
                 barCode: newProduct.barCode,
@@ -202,6 +255,34 @@ export default function Inventory() {
 
             })
             .catch((error) => console.error(error));
+    };
+
+    const addItemStock = () => {
+
+        console.log('Item creation status: ', isItemAlreadyCreated);
+        if (!isItemAlreadyCreated) {
+            // é preciso criar o item e só depois adicionar o itemStock
+            fetch(`${API_URL}/item/create`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
+                },
+                body: JSON.stringify(newProduct)
+            })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Failed to create item');
+                    }
+                    console.log('Item created');
+                    return response.json();
+                })
+                .then(addItemStockHelper)
+                .catch((error) => console.error(error));
+        }
+        else {
+            addItemStockHelper();
+        }
 
     };
 
@@ -212,7 +293,7 @@ export default function Inventory() {
                     {inventoryOngoing ? (
                         <div className='row'>
                             <div className='col-9'>
-                                <h1 className='text-center'  > Inventory in Progress</h1>
+                                <h1 className='text-center'>Inventory in Progress</h1>
                                 <div className='mt-3 row'>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <input type="text" placeholder='Search' onChange={(e) => setTextFilter(e.target.value)} />
@@ -226,6 +307,7 @@ export default function Inventory() {
                                                 <th scope="col">Category</th>
                                                 <th scope="col">Expiration Date</th>
                                                 <th scope="col">Quantity</th>
+                                                <th scope="col">Minimum Quantity</th>
                                                 <th scope="col"></th>
                                             </tr>
                                         </thead>
@@ -243,6 +325,34 @@ export default function Inventory() {
                                                         <td>{product.item.category}</td>
                                                         <td>{product.expirationDate}</td>
                                                         <td>{product.quantity}</td>
+                                                        <td>
+                                                            {userRoles.includes('ROLE_MANAGER_MASTER') || userRoles.includes('ROLE_FRANCHISE_OWNER') ? (
+                                                                <>
+                                                                    {editingMinStock === product.id ? (
+                                                                        <input
+                                                                            type="number"
+                                                                            value={minStockQuantity !== null ? minStockQuantity : product.minStockQuantity || ''}
+                                                                            onChange={(e) => setMinStockQuantity(e.target.value)}
+                                                                            onBlur={() => {
+                                                                                handleMinStockChange(product.id, minStockQuantity);
+                                                                                setEditingMinStock(null);
+                                                                            }}
+                                                                            onKeyDown={(e) => {
+                                                                                if (e.key === 'Enter') {
+                                                                                    handleMinStockChange(product.id, minStockQuantity);
+                                                                                    setEditingMinStock(null);
+                                                                                }
+                                                                            }}
+                                                                            autoFocus
+                                                                        />
+                                                                    ) : (
+                                                                        <span>{product.minStockQuantity || 'N/A'}</span>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <span>{product.minStockQuantity || 'N/A'}</span>
+                                                            )}
+                                                        </td>
                                                         <td>
                                                             <button className='btn btn-danger' onClick={() => removeProduct(product.id)}>
                                                                 <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
@@ -280,7 +390,7 @@ export default function Inventory() {
                     ) : (
                         <div>
                             <div>
-                                <h1 className='text-center' > No Inventory Ongoing</h1>
+                                <h1 className='text-center'>No Inventory Ongoing</h1>
                                 <div className='mt-5' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
                                     <div style={{ display: 'flex', width: '70%', justifyContent: 'space-between', flexDirection: 'row' }}>
                                         <div>

@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/managementLayout";
 import RestaurantCard from "@/components/restaurantCard";
 import { useEffect, useState } from 'react';
 import { API_URL } from '../../../api_url';
+import Cookies from "js-cookie";
 
 export default function Restaurants() {
 
@@ -11,12 +12,12 @@ export default function Restaurants() {
   useEffect(() => {
 
     const fetchRestaurants = async () => {
-      if (JSON.parse(sessionStorage.getItem('loggedUser')) && JSON.parse(sessionStorage.getItem('loggedUser')).company) {
-        fetch(`${API_URL}/restaurants/company/${JSON.parse(sessionStorage.getItem('loggedUser')).company.id}`, {
+      if (JSON.parse(sessionStorage.getItem('company'))) {
+        fetch(`${API_URL}/restaurants/company`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+            'Authorization': `Bearer ${Cookies.get('access_token')}`,
           }
         })
           .then((response) => response.json())
@@ -39,13 +40,13 @@ export default function Restaurants() {
   const handleRestaurantCreation = (e) => {
     e.preventDefault();
 
-        fetch(`${API_URL}/restaurants/`, {
+        fetch(`${API_URL}/restaurants`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
-            body: JSON.stringify({ name: restaurantToCreate, company: JSON.parse(sessionStorage.getItem('loggedUser')).company }),
+            body: JSON.stringify({ name: restaurantToCreate, company: JSON.parse(sessionStorage.getItem('company')) }),
         })
             .then((response) => {
                 if (!response.ok) {
