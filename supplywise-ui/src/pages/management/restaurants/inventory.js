@@ -20,6 +20,8 @@ export default function Inventory() {
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
     const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
+    // const [userRole, setUserRole] = useState('');
+    // const [minStockQuantity, setMinStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRoles, setUserRoles] = useState(null);
 
@@ -40,7 +42,7 @@ export default function Inventory() {
                 return response.text();
             })
             .then((data) => {
-                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim());
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim().replace('ROLE_', ''));
                 setUserRoles(rolesList);
                 console.log(rolesList);
             })
@@ -48,18 +50,6 @@ export default function Inventory() {
                 console.error("Error fetching company details:", error.message);
             });
     }, []);
-
-    // useEffect(() => {
-    //     const loggedUser = Cookies.get('user');
-    //     console.log(loggedUser);
-    //     if (loggedUser) {
-    //         const parsedUser = JSON.parse(loggedUser);
-    //         const role = parsedUser.role;
-    //         setUserRole(role);
-    //     } else {
-    //         console.error("No loggedUser found in sessionStorage.");
-    //     }
-    // }, []);
 
     useEffect(() => {
         fetchInventory();
@@ -168,7 +158,7 @@ export default function Inventory() {
     };
 
     const handleEditSubmit = async () => {
-        const canEditMinimumStock = userRoles.includes('ROLE_MANAGER_MASTER') || userRoles.includes('ROLE_FRANCHISE_OWNER');
+        const canEditMinimumStock = userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER');
     
         try {
             const response = await fetch(`${API_URL}/item-properties/${editingItem.id}`, {
@@ -447,7 +437,7 @@ export default function Inventory() {
                                                     <td>{product.expirationDate}</td>
                                                     <td>{product.quantity}</td>
                                                     <td>
-                                                        {(userRoles.includes('ROLE_MANAGER_MASTER') || userRoles.includes('ROLE_FRANCHISE_OWNER')) ? (
+                                                        {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
                                                             <>
                                                                 {editingMinStock === product.id ? (
                                                                     <input
@@ -531,7 +521,7 @@ export default function Inventory() {
                                                             </div>
                                                             <div className="mb-3">
                                                                 <label className="form-label">Minimum Quantity</label>
-                                                                {(userRoles.includes('ROLE_MANAGER_MASTER') || userRoles.includes('ROLE_FRANCHISE_OWNER')) ? (
+                                                                {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
                                                                     <input
                                                                         type="number"
                                                                         className="form-control"
