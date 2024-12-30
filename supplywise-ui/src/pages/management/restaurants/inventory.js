@@ -20,8 +20,6 @@ export default function Inventory() {
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
     const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
-    // const [userRole, setUserRole] = useState('');
-    // const [minStockQuantity, setMinStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRoles, setUserRoles] = useState(null);
 
@@ -133,7 +131,7 @@ export default function Inventory() {
             const response = await fetch(`${API_URL}/item-properties/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 }
             });
 
@@ -165,7 +163,7 @@ export default function Inventory() {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 },
                 body: JSON.stringify({
                     item: {
@@ -318,7 +316,7 @@ export default function Inventory() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 },
                 body: JSON.stringify(stockData)
             });
