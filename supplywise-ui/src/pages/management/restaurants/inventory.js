@@ -480,76 +480,6 @@ export default function Inventory() {
                                                     </td>
                                                 </tr>
                                             ))}
-
-                                        {isEditModalOpen && editingItem && (
-                                            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1">
-                                                <div className="modal-dialog">
-                                                    <div className="modal-content">
-                                                        <div className="modal-header">
-                                                            <h5 className="modal-title">Edit Item</h5>
-                                                            <button type="button" className="btn-close" onClick={() => {
-                                                                setIsEditModalOpen(false);
-                                                                setEditingItem(null);
-                                                            }}></button>
-                                                        </div>
-                                                        <div className="modal-body">
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Quantity</label>
-                                                                <input
-                                                                    type="number"
-                                                                    className="form-control"
-                                                                    value={editingItem.quantity}
-                                                                    onChange={(e) => setEditingItem({
-                                                                        ...editingItem,
-                                                                        quantity: parseInt(e.target.value)
-                                                                    })}
-                                                                />
-                                                            </div>
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Expiration Date</label>
-                                                                <input
-                                                                    type="date"
-                                                                    className="form-control"
-                                                                    value={editingItem.expirationDate}
-                                                                    onChange={(e) => setEditingItem({
-                                                                        ...editingItem,
-                                                                        expirationDate: e.target.value
-                                                                    })}
-                                                                />
-                                                            </div>
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Minimum Quantity</label>
-                                                                {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={editingItem.minimumStockQuantity || ''}
-                                                                        onChange={(e) => setEditingItem({
-                                                                            ...editingItem,
-                                                                            minimumStockQuantity: parseInt(e.target.value, 10)
-                                                                        })}
-                                                                    />
-                                                                ) : (
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={editingItem.minimumStockQuantity || ''}
-                                                                        disabled
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="modal-footer">
-                                                            <button type="button" className="btn btn-secondary" onClick={() => {
-                                                                setIsEditModalOpen(false);
-                                                                setEditingItem(null);
-                                                            }}>Cancel</button>
-                                                            <button type="button" className="btn btn-primary" onClick={handleEditSubmit}>Save Changes</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -681,6 +611,75 @@ export default function Inventory() {
                     </div>
                 )
             }
+            {isEditModalOpen && editingItem && (
+                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Edit Item</h5>
+                                <button type="button" className="btn-close" onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingItem(null);
+                                }}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label className="form-label">Quantity</label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        value={editingItem.quantity}
+                                        onChange={(e) => setEditingItem({
+                                            ...editingItem,
+                                            quantity: parseInt(e.target.value)
+                                        })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Expiration Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={editingItem.expirationDate}
+                                        onChange={(e) => setEditingItem({
+                                            ...editingItem,
+                                            expirationDate: e.target.value
+                                        })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Minimum Quantity</label>
+                                    {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={editingItem.minimumStockQuantity || ''}
+                                            onChange={(e) => setEditingItem({
+                                                ...editingItem,
+                                                minimumStockQuantity: parseInt(e.target.value, 10)
+                                            })}
+                                        />
+                                    ) : (
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={editingItem.minimumStockQuantity || ''}
+                                            disabled
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingItem(null);
+                                }}>Cancel</button>
+                                <button type="button" className="btn sw-bgcolor" onClick={handleEditSubmit}>Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 }
