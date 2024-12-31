@@ -20,8 +20,6 @@ export default function Inventory() {
     const [newItemStockQtt, setNewItemStockQtt] = useState(0);
     const [newItemStockExpirationDate, setNewItemStockExpirationDate] = useState(null);
     const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
-    const [userRole, setUserRole] = useState('');
-    const [minStockQuantity, setMinStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRoles, setUserRoles] = useState(null);
 
@@ -42,23 +40,13 @@ export default function Inventory() {
                 return response.text();
             })
             .then((data) => {
-                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim());
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim().replace('ROLE_', ''));
                 setUserRoles(rolesList);
+                console.log(rolesList);
             })
             .catch((error) => {
                 console.error("Error fetching company details:", error.message);
             });
-    }, []);
-
-    useEffect(() => {
-        const loggedUser = sessionStorage.getItem('loggedUser');
-        if (loggedUser) {
-            const parsedUser = JSON.parse(loggedUser);
-            const role = parsedUser.role;
-            setUserRole(role);
-        } else {
-            console.error("No loggedUser found in sessionStorage.");
-        }
     }, []);
 
     useEffect(() => {
@@ -143,7 +131,7 @@ export default function Inventory() {
             const response = await fetch(`${API_URL}/item-properties/${id}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 }
             });
 
@@ -168,14 +156,14 @@ export default function Inventory() {
     };
 
     const handleEditSubmit = async () => {
-        const canEditMinimumStock = (userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER');
+        const canEditMinimumStock = userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER');
     
         try {
             const response = await fetch(`${API_URL}/item-properties/${editingItem.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 },
                 body: JSON.stringify({
                     item: {
@@ -328,7 +316,7 @@ export default function Inventory() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${sessionStorage.getItem('sessionToken')}`,
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
                 },
                 body: JSON.stringify(stockData)
             });
@@ -447,7 +435,7 @@ export default function Inventory() {
                                                     <td>{product.expirationDate}</td>
                                                     <td>{product.quantity}</td>
                                                     <td>
-                                                        {userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER' ? (
+                                                        {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
                                                             <>
                                                                 {editingMinStock === product.id ? (
                                                                     <input
@@ -492,76 +480,6 @@ export default function Inventory() {
                                                     </td>
                                                 </tr>
                                             ))}
-
-                                        {isEditModalOpen && editingItem && (
-                                            <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1">
-                                                <div className="modal-dialog">
-                                                    <div className="modal-content">
-                                                        <div className="modal-header">
-                                                            <h5 className="modal-title">Edit Item</h5>
-                                                            <button type="button" className="btn-close" onClick={() => {
-                                                                setIsEditModalOpen(false);
-                                                                setEditingItem(null);
-                                                            }}></button>
-                                                        </div>
-                                                        <div className="modal-body">
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Quantity</label>
-                                                                <input
-                                                                    type="number"
-                                                                    className="form-control"
-                                                                    value={editingItem.quantity}
-                                                                    onChange={(e) => setEditingItem({
-                                                                        ...editingItem,
-                                                                        quantity: parseInt(e.target.value)
-                                                                    })}
-                                                                />
-                                                            </div>
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Expiration Date</label>
-                                                                <input
-                                                                    type="date"
-                                                                    className="form-control"
-                                                                    value={editingItem.expirationDate}
-                                                                    onChange={(e) => setEditingItem({
-                                                                        ...editingItem,
-                                                                        expirationDate: e.target.value
-                                                                    })}
-                                                                />
-                                                            </div>
-                                                            <div className="mb-3">
-                                                                <label className="form-label">Minimum Quantity</label>
-                                                                {userRole === 'MANAGER_MASTER' || userRole === 'FRANCHISE_OWNER' ? (
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={editingItem.minimumStockQuantity || ''}
-                                                                        onChange={(e) => setEditingItem({
-                                                                            ...editingItem,
-                                                                            minimumStockQuantity: parseInt(e.target.value, 10)
-                                                                        })}
-                                                                    />
-                                                                ) : (
-                                                                    <input
-                                                                        type="number"
-                                                                        className="form-control"
-                                                                        value={editingItem.minimumStockQuantity || ''}
-                                                                        disabled
-                                                                    />
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                        <div className="modal-footer">
-                                                            <button type="button" className="btn btn-secondary" onClick={() => {
-                                                                setIsEditModalOpen(false);
-                                                                setEditingItem(null);
-                                                            }}>Cancel</button>
-                                                            <button type="button" className="btn btn-primary" onClick={handleEditSubmit}>Save Changes</button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                         </tbody>
                                     </table>
                                 </div>
@@ -693,6 +611,75 @@ export default function Inventory() {
                     </div>
                 )
             }
+            {isEditModalOpen && editingItem && (
+                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Edit Item</h5>
+                                <button type="button" className="btn-close" onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingItem(null);
+                                }}></button>
+                            </div>
+                            <div className="modal-body">
+                                <div className="mb-3">
+                                    <label className="form-label">Quantity</label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        value={editingItem.quantity}
+                                        onChange={(e) => setEditingItem({
+                                            ...editingItem,
+                                            quantity: parseInt(e.target.value)
+                                        })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Expiration Date</label>
+                                    <input
+                                        type="date"
+                                        className="form-control"
+                                        value={editingItem.expirationDate}
+                                        onChange={(e) => setEditingItem({
+                                            ...editingItem,
+                                            expirationDate: e.target.value
+                                        })}
+                                    />
+                                </div>
+                                <div className="mb-3">
+                                    <label className="form-label">Minimum Quantity</label>
+                                    {(userRoles.includes('MANAGER_MASTER') || userRoles.includes('FRANCHISE_OWNER')) ? (
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={editingItem.minimumStockQuantity || ''}
+                                            onChange={(e) => setEditingItem({
+                                                ...editingItem,
+                                                minimumStockQuantity: parseInt(e.target.value, 10)
+                                            })}
+                                        />
+                                    ) : (
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={editingItem.minimumStockQuantity || ''}
+                                            disabled
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => {
+                                    setIsEditModalOpen(false);
+                                    setEditingItem(null);
+                                }}>Cancel</button>
+                                <button type="button" className="btn sw-bgcolor" onClick={handleEditSubmit}>Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </DashboardLayout>
     );
 }
