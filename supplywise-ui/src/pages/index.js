@@ -6,14 +6,14 @@ export default function Home() {
     <main>
       <Navbar/>
       <Head>
-        <title>Supplywise</title>
+        <title>SupplyWise</title>
         <meta name="description" content="Your solution for inventory management" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/Logo_Icon.png" />
       </Head>
       <div className="bg-container">
         <div className="content position-absolute top-40 start-20">
-          <h1 className="title" style={{fontSize: "80px"}}>Welcome to Supplywise</h1>
+          <h1 className="title" style={{fontSize: "80px"}}>Welcome to SupplyWise</h1>
           <h1 className="description" style={{color: "rgba(200, 200, 200, 1)"}}>
             Your solution for inventory management
           </h1>

@@ -5,11 +5,14 @@ import Link from 'next/link';
 import SidebarNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
 
-export default function Sidebar({ sessionUser }) {
+import Cookies from 'js-cookie';
+
+export default function Sidebar() {
 
     const pages = ["Dashboard", "Restaurants", "Settings"];
     const [currentPage, setCurrentPage] = useState('');
     const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+    const [username, setUsername] = useState(null);
 
     const numAlertas = 11;
 
@@ -32,8 +35,18 @@ export default function Sidebar({ sessionUser }) {
 
     function logout() {
         sessionStorage.clear();
-        window.location.href = '/';
+        window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/logout?client_id=3p7arovt4ql7qasmbjg52u1qas&logout_uri=http://localhost:3000';
     }
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            setCurrentPage(window.location.pathname);
+            if (sessionStorage.getItem('selectedRestaurant')) {
+                setSelectedRestaurant(JSON.parse(sessionStorage.getItem('selectedRestaurant')).name);
+            }
+            setUsername(Cookies.get('username'));
+        }
+    }, []);
 
     return (
         <nav className="col-2 bg-light vh-100 sw-bgcolor" style={{
@@ -78,12 +91,9 @@ export default function Sidebar({ sessionUser }) {
                         <hr className='m-0'/>
                         <li className='nav-item'>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 10 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} onClick={() => goToProfile()} />
-                                    {
-                                        sessionUser !== null &&
-                                        <span>{sessionUser.fullname}</span>
-                                    }
+                                <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer'}}>
+                                    <FontAwesomeIcon icon={faUser} style={{ width: '1.5vw', marginRight: '10px' }} onClick={() => goToProfile()}/>
+                                    <span>{username}</span>
                                 </div>
                                 <FontAwesomeIcon icon={faSignOutAlt} style={{ width: '1.5vw', cursor: 'pointer' }} onClick={() => logout()} />
                             </div>
