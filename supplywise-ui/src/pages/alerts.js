@@ -75,6 +75,28 @@ export default function Alerts() {
             .catch((error) => console.error("Error marking notification as read:", error));
     };
 
+    const markAsUnread = (notificationId) => {
+        const token = Cookies.get('access_token');
+    
+        fetch(`${API_URL}/notifications/${notificationId}/unread`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to mark notification as unread");
+    
+                setNotifications((prev) =>
+                    prev.map((n) =>
+                        n.id === notificationId ? { ...n, isRead: false } : n
+                    )
+                );
+            })
+            .catch((error) => console.error("Error marking notification as unread:", error));
+    };
+    
+
     return (
         <DashboardLayout>
             <div style={{ padding: '20px' }}>
@@ -110,12 +132,19 @@ export default function Alerts() {
                                             : 'Unread'}
                                     </td>
                                     <td>
-                                        {!notification.isRead && (
+                                        {!notification.isRead ? (
                                             <button
-                                                className="btn btn-primary"
+                                                className="btn btn-primary ms-2"
                                                 onClick={() => markAsRead(notification.id)}
                                             >
                                                 Mark as Read
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className="btn btn-secondary ms-2"
+                                                onClick={() => markAsUnread(notification.id)}
+                                            >
+                                                Mark as Unread
                                             </button>
                                         )}
                                     </td>

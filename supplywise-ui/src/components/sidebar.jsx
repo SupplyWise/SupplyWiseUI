@@ -16,27 +16,12 @@ export default function Sidebar() {
     const [numAlertas, setNumAlertas] = useState(0);
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            setCurrentPage(window.location.pathname);
-            if (sessionStorage.getItem('selectedRestaurant')) {
-                setSelectedRestaurant(JSON.parse(sessionStorage.getItem('selectedRestaurant')).name);
-            }
-        }
-    }, []);
-
-    useEffect(() => {
-        // Fetch the unread notifications when the component mounts
         fetchUnreadNotifications();
 
         // WebSocket for real-time updates
         const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications`);
         socket.onmessage = (event) => {
-            const newNotification = JSON.parse(event.data);
-
-            // Only add unresolved notifications
-            if (!newNotification.isResolved) {
-                fetchUnreadNotifications();  // Re-fetch unread notifications when a new one arrives
-            }
+            fetchUnreadNotifications(); // Refresh alert count when a new notification arrives
         };
 
         return () => {
@@ -45,14 +30,9 @@ export default function Sidebar() {
     }, []);
 
     const fetchUnreadNotifications = () => {
-        if (!selectedRestaurant) {
-            return; // Exit early if no restaurant is selected
-        }
-
         const token = Cookies.get('access_token');
-        const selectedRestaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
-        fetch(`${API_URL}/notifications/${selectedRestaurantId}`, {
+        fetch(`${API_URL}/notifications`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -66,7 +46,7 @@ export default function Sidebar() {
             .then((data) => {
                 // Filter unread notifications and update numAlertas
                 const unreadNotifications = data.filter(notification => !notification.read);
-                setNumAlertas(unreadNotifications.length);  // Set the number of unread alerts
+                setNumAlertas(unreadNotifications.length);
             })
             .catch((error) => {
                 console.error("Error fetching notifications:", error);
@@ -83,7 +63,7 @@ export default function Sidebar() {
 
     function logout() {
         sessionStorage.clear();
-        window.location.href = 'https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/logout?client_id=3p7arovt4ql7qasmbjg52u1qas&logout_uri=http://localhost:3000';
+        window.location.href = 'https://logout-url';
     }
 
     useEffect(() => {
