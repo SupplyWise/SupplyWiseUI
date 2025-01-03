@@ -35,7 +35,7 @@ export default function Alerts() {
         return () => {
             socket.close();
         };
-    }, [notifications]);
+    }, []); // Removed dependency array to prevent multiple socket connections
 
     const fetchNotifications = () => {
         const token = Cookies.get('access_token');
