@@ -45,6 +45,10 @@ export default function Sidebar() {
     }, []);
 
     const fetchUnreadNotifications = () => {
+        if (!selectedRestaurant) {
+            return; // Exit early if no restaurant is selected
+        }
+
         const token = Cookies.get('access_token');
         const selectedRestaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
