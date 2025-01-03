@@ -58,7 +58,6 @@ export default function Alerts() {
                     }))
                 );
                 setIsLoading(false);
-                console.log(data);
             })
             .catch((error) => {
                 console.error("Error fetching notifications:", error);

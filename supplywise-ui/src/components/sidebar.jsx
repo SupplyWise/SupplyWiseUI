@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import SidebarNavLink from './sidebar/sidebarNavLink';
 import { useState, useEffect } from 'react';
-
+import { API_URL } from '/api_url';
 import Cookies from 'js-cookie';
 
 export default function Sidebar() {
@@ -13,8 +13,7 @@ export default function Sidebar() {
     const [currentPage, setCurrentPage] = useState('');
     const [selectedRestaurant, setSelectedRestaurant] = useState(null);
     const [username, setUsername] = useState(null);
-
-    const numAlertas = 11;
+    const [numAlertas, setNumAlertas] = useState(0);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -24,6 +23,51 @@ export default function Sidebar() {
             }
         }
     }, []);
+
+    useEffect(() => {
+        // Fetch the unread notifications when the component mounts
+        fetchUnreadNotifications();
+
+        // WebSocket for real-time updates
+        const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications`);
+        socket.onmessage = (event) => {
+            const newNotification = JSON.parse(event.data);
+
+            // Only add unresolved notifications
+            if (!newNotification.isResolved) {
+                fetchUnreadNotifications();  // Re-fetch unread notifications when a new one arrives
+            }
+        };
+
+        return () => {
+            socket.close();
+        };
+    }, []);
+
+    const fetchUnreadNotifications = () => {
+        const token = Cookies.get('access_token');
+        const selectedRestaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
+
+        fetch(`${API_URL}/notifications/${selectedRestaurantId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to fetch notifications");
+                return response.json();
+            })
+            .then((data) => {
+                // Filter unread notifications and update numAlertas
+                const unreadNotifications = data.filter(notification => !notification.read);
+                setNumAlertas(unreadNotifications.length);  // Set the number of unread alerts
+            })
+            .catch((error) => {
+                console.error("Error fetching notifications:", error);
+            });
+    };
 
     function goToProfile() {
         if (!sessionUser || sessionUser === null) {
