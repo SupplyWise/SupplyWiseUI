@@ -6,31 +6,90 @@ import Cookies from 'js-cookie';
 export default function Alerts() {
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isFranchiseOwner, setIsFranchiseOwner] = useState(false);
+    const [restaurants, setRestaurants] = useState([]);
 
     useEffect(() => {
         fetchNotifications();
 
-        // WebSocket for real-time updates
-        const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications`);
+        const token = Cookies.get('access_token');
+        const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications?token=${token}`);
+
         socket.onmessage = (event) => {
             const newNotification = JSON.parse(event.data);
             if (!newNotification.isResolved) {
-                fetchNotifications();
+                // Check if the new notification is already in the state to prevent duplicates
+                setNotifications((prevNotifications) => {
+                    if (!prevNotifications.some((n) => n.id === newNotification.id)) {
+                        return [...prevNotifications, newNotification];
+                    }
+                    return prevNotifications;
+                });
             }
+        };
+
+        socket.onerror = (error) => {
+            console.error("WebSocket error:", error);
         };
 
         return () => {
             socket.close();
         };
-    }, []);
+    }, [notifications]);
 
     const fetchNotifications = () => {
         const token = Cookies.get('access_token');
 
-        fetch(`${API_URL}/notifications`, {
+        fetch(`${API_URL}/auth/roles`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Failed to fetch user roles');
+                return response.text();
+            })
+            .then((roles) => {
+                const isOwner = roles.includes('ROLE_FRANCHISE_OWNER');
+                setIsFranchiseOwner(isOwner);
+
+                if (isOwner) {
+                    fetchRestaurantsAndNotifications(token);
+                } else {
+                    fetchNotificationsForSingleRestaurant(token);
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching roles:', error);
+            });
+    };
+
+    const fetchRestaurantsAndNotifications = (token) => {
+        fetch(`${API_URL}/restaurants/company`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Failed to fetch restaurants');
+                return response.json();
+            })
+            .then((data) => {
+                setRestaurants(data);
+                data.forEach((restaurant) => {
+                    fetchNotificationsForRestaurant(restaurant.id, token);
+                });
+            })
+            .catch((error) => console.error('Error fetching restaurants:', error));
+    };
+
+    const fetchNotificationsForSingleRestaurant = (token) => {
+        fetch(`${API_URL}/notifications`, {
+            method: 'GET',
+            headers: {
                 'Authorization': `Bearer ${token}`,
             },
         })
@@ -39,7 +98,6 @@ export default function Alerts() {
                 return response.json();
             })
             .then((data) => {
-                // Reverse the order to show older notifications above newer ones
                 setNotifications(
                     data.reverse().map((notification) => ({
                         ...notification,
@@ -51,6 +109,41 @@ export default function Alerts() {
             .catch((error) => {
                 console.error("Error fetching notifications:", error);
                 setIsLoading(false);
+            });
+    };
+
+    const fetchNotificationsForRestaurant = (restaurantId, token) => {
+        fetch(`${API_URL}/notifications/${restaurantId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to fetch notifications");
+                return response.json();
+            })
+            .then((data) => {
+                setNotifications((prevNotifications) => {
+                    // Add new notifications if they don't exist already
+                    const newNotifications = data.reverse().map((notification) => ({
+                        ...notification,
+                        isRead: notification.read,
+                    }));
+
+                    const combinedNotifications = [
+                        ...prevNotifications,
+                        ...newNotifications.filter(
+                            (n) => !prevNotifications.some((prev) => prev.id === n.id)
+                        ),
+                    ];
+
+                    return combinedNotifications;
+                });
+                setIsLoading(false);
+            })
+            .catch((error) => {
+                console.error("Error fetching notifications for restaurant:", error);
             });
     };
 
@@ -77,7 +170,7 @@ export default function Alerts() {
 
     const markAsUnread = (notificationId) => {
         const token = Cookies.get('access_token');
-    
+
         fetch(`${API_URL}/notifications/${notificationId}/unread`, {
             method: 'POST',
             headers: {
@@ -86,7 +179,7 @@ export default function Alerts() {
         })
             .then((response) => {
                 if (!response.ok) throw new Error("Failed to mark notification as unread");
-    
+
                 setNotifications((prev) =>
                     prev.map((n) =>
                         n.id === notificationId ? { ...n, isRead: false } : n
@@ -95,7 +188,6 @@ export default function Alerts() {
             })
             .catch((error) => console.error("Error marking notification as unread:", error));
     };
-    
 
     return (
         <DashboardLayout>
@@ -118,8 +210,8 @@ export default function Alerts() {
                                 <tr
                                     key={notification.id}
                                     style={{
-                                        color: notification.isRead ? '#6c757d' : 'black',  // Lighter text for read notifications
-                                        fontWeight: notification.isRead ? 'normal' : 'bold',  // Bold text for unread notifications
+                                        color: notification.isRead ? '#6c757d' : 'black',
+                                        fontWeight: notification.isRead ? 'normal' : 'bold',
                                     }}
                                 >
                                     <td>{notification.message}</td>

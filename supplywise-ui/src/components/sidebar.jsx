@@ -14,14 +14,17 @@ export default function Sidebar() {
     const [selectedRestaurant, setSelectedRestaurant] = useState(null);
     const [username, setUsername] = useState(null);
     const [numAlertas, setNumAlertas] = useState(0);
+    const [isFranchiseOwner, setIsFranchiseOwner] = useState(false);
 
     useEffect(() => {
-        fetchUnreadNotifications();
+        fetchNotifications();
 
         // WebSocket for real-time updates
-        const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications`);
+        const token = Cookies.get('access_token');
+        const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications?token=${token}`);
+
         socket.onmessage = (event) => {
-            fetchUnreadNotifications(); // Refresh alert count when a new notification arrives
+            fetchNotifications();
         };
 
         return () => {
@@ -29,13 +32,59 @@ export default function Sidebar() {
         };
     }, []);
 
-    const fetchUnreadNotifications = () => {
+    const fetchNotifications = () => {
         const token = Cookies.get('access_token');
 
-        fetch(`${API_URL}/notifications`, {
+        fetch(`${API_URL}/auth/roles`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Failed to fetch user roles');
+                return response.text();
+            })
+            .then((roles) => {
+                const isOwner = roles.includes('ROLE_FRANCHISE_OWNER');
+                setIsFranchiseOwner(isOwner);
+                console.log(roles);
+
+                if (isOwner) {
+                    fetchRestaurantsAndNotifications(token);
+                } else {
+                    fetchNotificationsForSingleRestaurant(token);
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching roles:', error);
+            });
+    };
+
+    const fetchRestaurantsAndNotifications = (token) => {
+        fetch(`${API_URL}/restaurants/company`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error('Failed to fetch restaurants');
+                return response.json();
+            })
+            .then((data) => {
+                data.forEach((restaurant) => {
+                    fetchNotificationsForRestaurant(restaurant.id, token);
+                });
+            })
+            .catch((error) => console.error('Error fetching restaurants:', error));
+    };
+
+    const fetchNotificationsForSingleRestaurant = (token) => {
+        fetch(`${API_URL}/notifications`, {
+            method: 'GET',
+            headers: {
                 'Authorization': `Bearer ${token}`,
             },
         })
@@ -44,13 +93,35 @@ export default function Sidebar() {
                 return response.json();
             })
             .then((data) => {
-                // Filter unread notifications and update numAlertas
-                const unreadNotifications = data.filter(notification => !notification.read);
-                setNumAlertas(unreadNotifications.length);
+                setNotificationsAndAlertCount(data);
             })
             .catch((error) => {
                 console.error("Error fetching notifications:", error);
             });
+    };
+
+    const fetchNotificationsForRestaurant = (restaurantId, token) => {
+        fetch(`${API_URL}/notifications/${restaurantId}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        })
+            .then((response) => {
+                if (!response.ok) throw new Error("Failed to fetch notifications");
+                return response.json();
+            })
+            .then((data) => {
+                setNotificationsAndAlertCount(data);
+            })
+            .catch((error) => {
+                console.error("Error fetching notifications for restaurant:", error);
+            });
+    };
+
+    const setNotificationsAndAlertCount = (notificationsData) => {
+        const unreadNotifications = notificationsData.filter(notification => !notification.read);
+        setNumAlertas(unreadNotifications.length);
     };
 
     function goToProfile() {
@@ -101,7 +172,7 @@ export default function Sidebar() {
                     </ul>
                 </div>
             </div>
-            
+
             {/* Alerts and Profile Section */}
             <div className='row' style={{paddingLeft: "0px"}}>
                 <div className='col-12' style={{paddingLeft: "0px"}}>
