@@ -6,26 +6,16 @@ import Cookies from 'js-cookie';
 export default function Alerts() {
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [hasRestaurant, setHasRestaurant] = useState(true);
 
     useEffect(() => {
-        const selectedRestaurant = sessionStorage.getItem('selectedRestaurant');
-        if (!selectedRestaurant) {
-            setHasRestaurant(false);
-            setIsLoading(false);
-            return; // Exit early if no restaurant is selected
-        }
-
         fetchNotifications();
 
         // WebSocket for real-time updates
         const socket = new WebSocket(`${API_URL.replace('http', 'ws')}/ws/notifications`);
         socket.onmessage = (event) => {
             const newNotification = JSON.parse(event.data);
-
-            // Only add unresolved notifications
             if (!newNotification.isResolved) {
-                setNotifications((prev) => [newNotification, ...prev]);
+                fetchNotifications();
             }
         };
 
@@ -36,9 +26,8 @@ export default function Alerts() {
 
     const fetchNotifications = () => {
         const token = Cookies.get('access_token');
-        const selectedRestaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
-        fetch(`${API_URL}/notifications/${selectedRestaurantId}`, {
+        fetch(`${API_URL}/notifications`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -90,12 +79,7 @@ export default function Alerts() {
         <DashboardLayout>
             <div style={{ padding: '20px' }}>
                 <h1 className="text-center">Notifications</h1>
-                {!hasRestaurant ? (
-                    <div className="text-center mt-5">
-                        <h3>No restaurant selected</h3>
-                        <p>Please select a restaurant to view notifications.</p>
-                    </div>
-                ) : isLoading ? (
+                {isLoading ? (
                     <div className="text-center mt-5">Loading notifications...</div>
                 ) : notifications.length > 0 ? (
                     <table className="table table-striped">
