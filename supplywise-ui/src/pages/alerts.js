@@ -38,7 +38,7 @@ export default function Alerts() {
         const token = Cookies.get('access_token');
         const selectedRestaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
 
-        fetch(`${API_URL}/notifications/${selectedRestaurantId}?includeResolved=false`, {
+        fetch(`${API_URL}/notifications/${selectedRestaurantId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,8 +50,15 @@ export default function Alerts() {
                 return response.json();
             })
             .then((data) => {
-                setNotifications(data);
+                // Reverse the order to show older notifications above newer ones
+                setNotifications(
+                    data.reverse().map((notification) => ({
+                        ...notification,
+                        isRead: notification.read,
+                    }))
+                );
                 setIsLoading(false);
+                console.log(data);
             })
             .catch((error) => {
                 console.error("Error fetching notifications:", error);
@@ -59,22 +66,25 @@ export default function Alerts() {
             });
     };
 
-    const markAsResolved = (notificationId) => {
+    const markAsRead = (notificationId) => {
         const token = Cookies.get('access_token');
 
-        fetch(`${API_URL}/notifications/${notificationId}/resolve`, {
+        fetch(`${API_URL}/notifications/${notificationId}/read`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
         })
             .then((response) => {
-                if (!response.ok) throw new Error("Failed to resolve notification");
+                if (!response.ok) throw new Error("Failed to mark notification as read");
 
-                // Remove resolved notification from the state
-                setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+                setNotifications((prev) =>
+                    prev.map((n) =>
+                        n.id === notificationId ? { ...n, isRead: true } : n
+                    )
+                );
             })
-            .catch((error) => console.error("Error resolving notification:", error));
+            .catch((error) => console.error("Error marking notification as read:", error));
     };
 
     return (
@@ -100,17 +110,29 @@ export default function Alerts() {
                         </thead>
                         <tbody>
                             {notifications.map((notification) => (
-                                <tr key={notification.id}>
+                                <tr
+                                    key={notification.id}
+                                    style={{
+                                        color: notification.isRead ? '#6c757d' : 'black',  // Lighter text for read notifications
+                                        fontWeight: notification.isRead ? 'normal' : 'bold',  // Bold text for unread notifications
+                                    }}
+                                >
                                     <td>{notification.message}</td>
                                     <td>{new Date(notification.createdAt).toLocaleString()}</td>
-                                    <td>{notification.isResolved ? 'Resolved' : 'Unresolved'}</td>
                                     <td>
-                                        {!notification.isResolved && (
+                                        {notification.isResolved
+                                            ? 'Resolved'
+                                            : notification.isRead
+                                            ? 'Read'
+                                            : 'Unread'}
+                                    </td>
+                                    <td>
+                                        {!notification.isRead && (
                                             <button
-                                                className="btn btn-success"
-                                                onClick={() => markAsResolved(notification.id)}
+                                                className="btn btn-primary"
+                                                onClick={() => markAsRead(notification.id)}
                                             >
-                                                Mark as Resolved
+                                                Mark as Read
                                             </button>
                                         )}
                                     </td>
