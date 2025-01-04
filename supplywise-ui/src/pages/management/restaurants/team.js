@@ -56,16 +56,44 @@ export default function Team() {
         setIsAddingManager(true);
     }
 
-    const addManager = () => {
+    const addManager = async () => {
+        if (newUserName === '' || newUserEmail === '' || newUserRole === '') {
+            return;
+        }
+        
+        if (newUserRole == 'manager') {
+            try {
+                const requestBody = {
+                    username: newUserName,
+                    email: newUserEmail,
+                    company_id: sessionStorage.getItem('company') || null, // Replace with appropriate value or logic for `company_id`
+                    restaurant_id: sessionStorage.getItem('selectedRestaurant') || null // Replace with appropriate value or logic for `restaurant_id`
+                };
+    
+                const managerResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/create-manager`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${Cookies.get('access_token')}` // Replace `authToken` with your authentication token variable
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+    
+                if (!managerResponse.ok) {
+                    throw new Error('Failed to create manager');
+                }
+    
+                const responseData = await managerResponse.json();
+                console.log('Manager created successfully:', responseData);
+    
+            } catch (error) {
+                console.error('Error creating manager:', error);
+            }
+        }
+    
         setIsAddingManager(false);
-        setManagers([...managers, {
-            id: Math.random(),
-            name: newUserName,
-            role: newUserRole,
-            email: newUserEmail,
-            restaurant: newUserRestaurantId,
-        }]);
-    }
+        // TODO: add toast to show success
+    };
 
 
     const roles = ["manager", "manager_master"];
