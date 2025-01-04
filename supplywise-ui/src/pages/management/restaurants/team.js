@@ -9,24 +9,11 @@ import ManagerCard from "@/components/managerCard";
 
 export default function Team() {
 
-    const team = [
-        {
-            id: 1,
-            name: "John Doe",
-            role: "manager",
-            email: "some_email@ua.pt",
-            restaurant: "9dbd7a1d-b31d-4cba-8326-2cd2aea93ba1",
-        },
-        {
-            id: 2,
-            name: "Mary Jane",
-            role: "manager_master",
-            email: "some_email@ua.pt",
-            restaurant: "9dbd7a1d-b31d-4cba-8326-2cd2aea93ba1",
-        },
-    ]
+    useEffect(() => {
+        getManagers();
+    }, []);
 
-    const [managers, setManagers] = useState(team);
+    const [managers, setManagers] = useState([]);
     const [textFilter, setTextFilter] = useState('');
 
     function getRoleName(role) {
@@ -50,7 +37,6 @@ export default function Team() {
     const [newUserName, setNewUserName] = useState('');
     const [newUserEmail, setNewUserEmail] = useState('');
     const [newUserRole, setNewUserRole] = useState('');
-    const newUserRestaurantId = '9dbd7a1d-b31d-4cba-8326-2cd2aea93ba1';
 
     const openModalAddManager = () => {
         setIsAddingManager(true);
@@ -95,6 +81,29 @@ export default function Team() {
         // TODO: add toast to show success
     };
 
+    const getManagers = async () => {
+        try {
+            const response = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/get-managers`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch managers');
+            }
+
+            const responseData = await response.json();
+            console.log('Managers fetched successfully:', responseData);
+
+            setManagers(responseData.users);
+
+        } catch (error) {
+            console.error('Error fetching managers:', error);
+        }
+    }
 
     const roles = ["manager", "manager_master"];
 
