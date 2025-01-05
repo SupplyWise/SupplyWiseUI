@@ -6,6 +6,10 @@
     background-color: #fa3e13;
 }
 
+.sw-bgcolor-static{
+    background-color: #f65835;
+}
+
 .sw-color{
     color: #f65835;
 }
@@ -65,18 +69,22 @@
   text-decoration: underline;
 }
 
-.bell-alert {
-  position: relative;
-  top: -15px;
-  color: white;
-  padding: 5px;
-  font-size: 18px;
-}
-
 .restaurant-section-nav {
   color: black;
 }
 
 .restaurant-section-nav:hover {
   color: #f65835;
+}
+
+.nav-item:hover {
+  color: #f65835;
+}
+
+.nav-link:hover {
+  color: #f65835 !important;
+}
+
+.nav-link.active {
+  background-color: #d3d2d2 !important;
 }

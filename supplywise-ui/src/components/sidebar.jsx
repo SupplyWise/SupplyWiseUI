@@ -155,7 +155,6 @@ export default function Sidebar() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                paddingRight: '0px',
                 boxShadow: '4px 0px 5px rgba(0, 0, 0, 0.2)',
             }}
         >
@@ -166,10 +165,9 @@ export default function Sidebar() {
                         <Image src="/Logo_Nav.png" alt="Supplywise" width={200} height={58} />
                     </Link>
                 </div>
-    
-                {/* Navigation Links */}
-                <div className="row">
-                    <ul className="nav flex-column fs-4 fw-bold text-center">
+                <div className='row'>
+                    {/* Nav Links */}
+                    <ul className="nav flex-column fs-4 fw-bold text-center p-0">
                         <hr className="my-0" />
                         {pages.map((page, index) => (
                             <SidebarNavLink
@@ -184,8 +182,8 @@ export default function Sidebar() {
             </div>
     
             {/* Notifications and Profile Section */}
-            <div className="row" style={{ paddingLeft: '0px' }}>
-                <div className="col-12" style={{ paddingLeft: '0px' }}>
+            <div className="row" style={{ padding: '0px' }}>
+                <div className="col-12" style={{ padding: '0px' }}>
                 <hr className="my-0" />
     
                     {/* Notifications */}
