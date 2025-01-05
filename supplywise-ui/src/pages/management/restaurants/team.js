@@ -9,7 +9,7 @@ import ManagerCard from "@/components/managerCard";
 
 export default function Team() {
 
-    const [userRoles, setUserRoles] = useState(null);
+    const [userRoles, setUserRoles] = useState([]);
 
     // Fetch user role from session or context
     useEffect(() => {
@@ -34,9 +34,14 @@ export default function Team() {
             .catch((error) => {
                 console.error("Error fetching company details:", error.message);
             });
-
-        getManagers();
     }, []);
+
+    // Fetch managers only when userRoles is updated
+    useEffect(() => {
+        if (userRoles.length > 0) { // Ensure userRoles is populated
+            getManagers();
+        }
+    }, [userRoles]); // Trigger when userRoles changes
 
     const [managers, setManagers] = useState([]);
     const [textFilter, setTextFilter] = useState('');
@@ -50,11 +55,6 @@ export default function Team() {
             default:
                 return "Unknown";
         }
-    }
-
-    function deleteManager(id) {
-        console.log('delete manager with id', id);
-        setManagers(managers.filter(manager => manager.id !== id));
     }
 
     // add manager
@@ -135,6 +135,28 @@ export default function Team() {
 
         } catch (error) {
             console.error('Error fetching managers:', error);
+        }
+    }
+
+    const deleteManager = async (username) => {
+        try {
+            const response = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/delete-manager?target_username=${username}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete manager');
+            }
+
+            console.log('Manager deleted successfully');
+            setManagers(managers.filter(manager => manager.username !== username));
+
+        } catch (error) {
+            console.error('Error deleting manager:', error);
         }
     }
 

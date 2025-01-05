@@ -16,7 +16,7 @@ export default function ManagerCard({ id, name, role, restaurant, email, getRole
                         </div>
                         <div className="col-6 text-end">
                             <button className="btn sw-bgcolor me-1"><FontAwesomeIcon icon={faPencil} style={{ padding: ".05vw", width: "1vw" }}></FontAwesomeIcon></button>
-                            <button onClick={() => deleteManager(id)} className="btn btn-dark  me-1"><FontAwesomeIcon icon={faTrash} style={{ padding: ".05vw", width: "1vw" }}></FontAwesomeIcon></button>
+                            <button onClick={() => deleteManager(name)} className="btn btn-dark  me-1"><FontAwesomeIcon icon={faTrash} style={{ padding: ".05vw", width: "1vw" }}></FontAwesomeIcon></button>
                         </div>
                     </div>
                 </div>
