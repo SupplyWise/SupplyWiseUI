@@ -153,7 +153,7 @@ export default function Team() {
             }
 
             console.log('Manager deleted successfully');
-            setManagers(managers.filter(manager => manager.username !== username));
+            setManagers(managers.filter(manager => manager.name !== username));
 
         } catch (error) {
             console.error('Error deleting manager:', error);
