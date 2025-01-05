@@ -56,14 +56,19 @@ export default function DashboardLayout({ children }) {
 
     const [companyToCreate, setCompanyToCreate] = useState('');
     const [restaurantToCreate, setRestaurantToCreate] = useState('');
+    const [scheduleInventory, setScheduleInventory] = useState(false);
+    const [inventoryPeriodicity, setInventoryPeriodicity] = useState('CUSTOM');
+
+    useEffect(() => {
+        // Authentication and company fetching logic here (unchanged)
+    }, []);
 
     const handleCompanyCreation = async (e) => {
         e.preventDefault();
         setIsLoading(true); // Show the loader
-    
+
         const token = Cookies.get('access_token');
-        const refreshToken = Cookies.get('refresh_token'); // Assuming you store the refresh token in cookies
-    
+        const refreshToken = Cookies.get('refresh_token');
         try {
             // Step 1: Create the company
             const companyResponse = await fetch(`${API_URL}/company/create?name=${companyToCreate}`, {
@@ -78,7 +83,7 @@ export default function DashboardLayout({ children }) {
                 throw new Error('Failed to create company');
             }
     
-            const company = await companyResponse.json(); // Assuming the API returns company data
+            const company = await companyResponse.json();
     
             if (!company) {
                 throw new Error('Company creation failed: No company data returned');
@@ -114,33 +119,35 @@ export default function DashboardLayout({ children }) {
     
             console.log('Tokens refreshed successfully');
     
-            // Step 3: Create the restaurant
+            // Step 3: Create the restaurant with periodicity if applicable
+            const restaurantData = {
+                name: restaurantToCreate,
+                company,
+            };
+            if (scheduleInventory) restaurantData.periodicity = inventoryPeriodicity;
+
             const restaurantResponse = await fetch(`${API_URL}/restaurants`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${access_token}`, // Use refreshed access token
+                    'Authorization': `Bearer ${access_token}`,
                 },
-                body: JSON.stringify({ name: restaurantToCreate, company: company }),
+                body: JSON.stringify(restaurantData),
             });
     
             if (!restaurantResponse.ok) {
                 throw new Error('Failed to create restaurant');
             }
-    
             const restaurantMessage = await restaurantResponse.text();
             console.log(`Restaurant created: ${restaurantMessage}`);
-    
-            // Reload
+
             window.location.reload();
-    
         } catch (error) {
             console.error(`Error: ${error.message}`);
         } finally {
             setIsLoading(false); // Hide the loader
         }
     };
-    
 
     return (
         <main>
@@ -156,64 +163,97 @@ export default function DashboardLayout({ children }) {
                     <Sidebar />
                     <div className="col-10" style={{ overflowY: 'auto', height: '100vh' }}>
                         <div className="container">
-                            {
-                                companyDetails !== null ?
-                                    <>
-                                        <div className="row mt-5">
-                                            <h1>{companyDetails?.name}</h1>
-                                            <h5>Created at <i className="text-muted">{companyDetails?.createdAt.split('.')[0].replace('T', ' ')}</i></h5>
-                                        </div>
-                                        <div className="row mt-2">
-                                            {children}
-                                        </div>
-                                    </>
-                                    :
-                                    <>
-                                        <div className="row mt-5">
-                                            <form onSubmit={handleCompanyCreation}>
-                                                <h2>Create a Company</h2>
-                                                <h5>Start by creating a company to manage your inventory</h5>
+                            {companyDetails ? (
+                                <>
+                                    <div className="row mt-5">
+                                        <h1>{companyDetails?.name}</h1>
+                                        <h5>
+                                            Created at{" "}
+                                            <i className="text-muted">
+                                                {companyDetails?.createdAt.split('.')[0].replace('T', ' ')}
+                                            </i>
+                                        </h5>
+                                    </div>
+                                    <div className="row mt-2">{children}</div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="row mt-5">
+                                        <form onSubmit={handleCompanyCreation}>
+                                            <h2>Create a Company</h2>
+                                            <h5>Start by creating a company to manage your inventory</h5>
+                                            <div className="form-group mt-3">
+                                                <input
+                                                    type="text"
+                                                    id="companyToCreate"
+                                                    className="form-control"
+                                                    placeholder="Company Name"
+                                                    value={companyToCreate}
+                                                    onChange={(e) => setCompanyToCreate(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <h5 className="mt-3">Then, name your first restaurant</h5>
+                                            <div className="form-group mt-3">
+                                                <input
+                                                    type="text"
+                                                    id="restaurantToCreate"
+                                                    className="form-control"
+                                                    placeholder="Restaurant Name"
+                                                    value={restaurantToCreate}
+                                                    onChange={(e) => setRestaurantToCreate(e.target.value)}
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="form-check mt-3">
+                                                <input
+                                                    type="checkbox"
+                                                    className="form-check-input"
+                                                    id="scheduleInventory"
+                                                    checked={scheduleInventory}
+                                                    onChange={() => setScheduleInventory(!scheduleInventory)}
+                                                />
+                                                <label htmlFor="scheduleInventory" className="form-check-label">
+                                                    Schedule Inventory Count
+                                                </label>
+                                            </div>
+                                            {scheduleInventory && (
                                                 <div className="form-group mt-3">
-                                                    {/* <label htmlFor="companyToCreate">Company Name</label> */}
-                                                    <input
-                                                        type="text"
-                                                        id="companyToCreate"
+                                                    <label htmlFor="inventoryPeriodicity">Inventory Periodicity</label>
+                                                    <select
+                                                        id="inventoryPeriodicity"
                                                         className="form-control"
-                                                        placeholder="Company Name"
-                                                        value={companyToCreate}
-                                                        onChange={(e) => setCompanyToCreate(e.target.value)}
-                                                        required
-                                                    />
-                                                </div>
-                                                <h5 className="mt-3">Then, name your first restaurant</h5>
-                                                <div className="form-group mt-3">
-                                                    {/* <label htmlFor="restaurantToCreate">Restaurant Name</label> */}
-                                                    <input
-                                                        type="text"
-                                                        id="restaurantToCreate"
-                                                        className="form-control"
-                                                        placeholder="Restaurant Name"
-                                                        value={restaurantToCreate}
-                                                        onChange={(e) => setRestaurantToCreate(e.target.value)}
-                                                        required
-                                                    />
-                                                </div>
-                                                <button type="submit" className="btn sw-bgcolor mt-3" disabled={isLoading}>
-                                                    {isLoading ? 'Creating...' : 'Create'}
-                                                </button>
-                                            </form>
-
-                                            {isLoading && (
-                                                <div className="mt-3 text-center">
-                                                    <div className="spinner-border text-primary" role="status">
-                                                        <span className="visually-hidden">Loading...</span>
-                                                    </div>
-                                                    <p>Processing your request...</p>
+                                                        value={inventoryPeriodicity}
+                                                        onChange={(e) => setInventoryPeriodicity(e.target.value)}
+                                                    >
+                                                        <option value="DAILY">Daily</option>
+                                                        <option value="WEEKLY">Weekly</option>
+                                                        <option value="MONTHLY">Monthly</option>
+                                                        <option value="YEARLY">Yearly</option>
+                                                        <option value="CUSTOM">Custom</option>
+                                                    </select>
                                                 </div>
                                             )}
-                                        </div>
-                                    </>
-                            }
+                                            <button
+                                                type="submit"
+                                                className="btn sw-bgcolor mt-3"
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading ? "Creating..." : "Create"}
+                                            </button>
+                                        </form>
+
+                                        {isLoading && (
+                                            <div className="mt-3 text-center">
+                                                <div className="spinner-border text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                                <p>Processing your request...</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
