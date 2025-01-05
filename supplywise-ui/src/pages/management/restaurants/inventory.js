@@ -22,6 +22,11 @@ export default function Inventory() {
     const [minimumStockQuantity, setminimumStockQuantity] = useState(null);
     const [editingMinStock, setEditingMinStock] = useState(null);
     const [userRoles, setUserRoles] = useState(null);
+    const [inventorySchedule, setInventorySchedule] = useState('');
+    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Today's date
+    const [endDate, setEndDate] = useState(''); // Default empty, will be calculated if needed
+    const [isEndDateDisabled, setIsEndDateDisabled] = useState(false);
+    const [customInventoryPeriodicity, setCustomInventoryPeriodicity] = useState(''); 
 
     // Fetch user role from session or context
     useEffect(() => {
@@ -51,6 +56,7 @@ export default function Inventory() {
 
     useEffect(() => {
         fetchInventory();
+        fetchInventorySchedule();
     }, []);
 
     const fetchInventory = () => {
@@ -80,35 +86,126 @@ export default function Inventory() {
             .catch((error) => console.error(error));
     };
 
-
-    const startInventory = () => {
-        let startDate = document.getElementById('startDate').value;
-        if (startDate === '') {
-            startDate = new Date().toISOString().split('T')[0];
+    const fetchInventorySchedule = () => {
+        const restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
+        fetch(`${API_URL}/restaurants/${restaurantId}/schedule`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
+            },
+        })
+        .then((response) => {
+            if (!response.ok) {
+                console.error(`Error: ${response.status} ${response.statusText}`);
+                throw new Error('Failed to fetch inventory schedule');
+            }
+            return response.json();
+        })
+        .then((data) => {
+            // Check if the periodicity is NULL and set it as 'not set'
+            const periodicity = (data.periodicity && data.periodicity !== 'NULL') 
+                                ? data.periodicity.toLowerCase() 
+                                : 'not set';
+            
+            const customInventoryPeriodicity = data.customInventoryPeriodicity || null;
+        
+            setInventorySchedule(periodicity);
+        
+            if (periodicity === 'custom') {
+                setCustomInventoryPeriodicity(customInventoryPeriodicity);
+            } else {
+                setCustomInventoryPeriodicity('');
+            }
+        
+            console.log("Inventory Schedule Data:", data);
+        })
+        
+        .catch((error) => console.error('Error fetching inventory schedule:', error));
+    };
+    
+    
+    const getDefaultEndDate = (startDate, schedule) => {
+        const start = new Date(startDate);
+        switch (schedule.toLowerCase()) {
+            case 'daily':
+                start.setDate(start.getDate() + 1);
+                break;
+            case 'weekly':
+                start.setDate(start.getDate() + 7);
+                break;
+            case 'monthly':
+                start.setMonth(start.getMonth() + 1);
+                break;
+            case 'yearly':
+                start.setFullYear(start.getFullYear() + 1);
+                break;
+            case 'custom':
+                if (customInventoryPeriodicity) {
+                    console.log('customInventoryPeriodicity', customInventoryPeriodicity);
+                    start.setDate(start.getDate() + parseInt(customInventoryPeriodicity));
+                }
+                break;
+            default:
+                return ''; // Return empty if schedule is "Not Set"
         }
-        startDate += 'T00:00:00.000Z';
+        return start.toISOString().split('T')[0];
+    };
 
-        let endDate = document.getElementById('endDate').value;
-        if (endDate === '') {
-            endDate = null;
+    const handleStartDateChange = (event) => {
+        const newStartDate = event.target.value;
+        setStartDate(newStartDate);
+
+        if (inventorySchedule !== 'not set') {
+            // If schedule is set, calculate the end date
+            const newEndDate = getDefaultEndDate(newStartDate, inventorySchedule);
+            setEndDate(newEndDate);
         } else {
-            endDate += 'T23:59:59.999Z';
+            setEndDate('');
         }
+    };
 
-        let restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
-
+    useEffect(() => {
+        if (inventorySchedule !== 'not set') {
+            setIsEndDateDisabled(true);  // Disable end date field if schedule is defined
+            setEndDate(getDefaultEndDate(startDate, inventorySchedule));  // Set end date based on schedule
+        } else {
+            setIsEndDateDisabled(false);  // Enable end date if schedule is not defined
+            setEndDate('');  // Keep end date empty if no schedule
+        }
+    }, [inventorySchedule, startDate]);
+    
+    const startInventory = () => {
+        const today = new Date().toISOString().split('T')[0];
+        const startDate = document.getElementById('startDate').value || today;
+    
+        let endDateInput = null;
+        let endDate = '';
+        
+        if (inventorySchedule === 'not set') {
+            endDateInput = document.getElementById('endDate') ? document.getElementById('endDate').value : '';
+        } else {
+            endDate = endDate || '';
+        }
+    
+        endDate = endDateInput 
+            ? `${endDateInput}T23:59:59.999Z` 
+            : inventorySchedule !== 'not set' 
+            ? `${getDefaultEndDate(startDate, inventorySchedule)}T23:59:59.999Z` 
+            : null;
+    
+        const restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
+    
         fetch(`${API_URL}/inventories`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
-            body: JSON.stringify({ emissionDate: startDate, expectedClosingDate: endDate, restaurantId: restaurantId }),
+            body: JSON.stringify({ emissionDate: `${startDate}T00:00:00.000Z`, expectedClosingDate: endDate, restaurantId }),
         })
             .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to start inventory');
-                }
+                if (!response.ok) throw new Error('Failed to start inventory');
                 return response.json();
             })
             .then((inventory) => {
@@ -403,6 +500,7 @@ export default function Inventory() {
                         <div className='row'>
                             <div className='col-9'>
                                 <h1 className='text-center'>Inventory in Progress</h1>
+                                <p className="text-center text-muted">Schedule: {inventorySchedule}</p>
                                 <div className='mt-3 row'>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <input type="text" placeholder='Search' onChange={(e) => setTextFilter(e.target.value)} />
@@ -491,7 +589,7 @@ export default function Inventory() {
                                     <div className='text-end mt-2'>
                                         <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
                                         <h6><span className='fw-bold'>Closing Date:</span> {inventoryOngoing.expectedClosingDate === null ? 'Not Defined' : inventoryOngoing.expectedClosingDate.split('T')[0]}</h6>
-                                    </div>
+                                        </div>
                                     <div className="d-flex flex-column align-items-center mt-4">
                                         <div className='row w-75'>
                                             <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
@@ -505,26 +603,73 @@ export default function Inventory() {
 
                         </div>
                     ) : (
-                        <div>
-                            <div>
-                                <h1 className='text-center'>No Inventory Ongoing</h1>
-                                <div className='mt-5' style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
-                                    <div style={{ display: 'flex', width: '70%', justifyContent: 'space-between', flexDirection: 'row' }}>
-                                        <div>
-                                            <label htmlFor="date">Starting Date</label>
-                                            <input type="date" id="startDate" name="date" />
-                                        </div>
-                                        <div>
-                                            <label htmlFor="date">Expected Closing Date</label>
-                                            <input type="date" id="endDate" name="date" />
-                                        </div>
-                                        <div>
-                                            <button className='btn sw-bgcolor' onClick={() => startInventory()}>Start Inventory</button>
-                                        </div>
+                        <div className="container mt-5">
+                            <div className="text-center">
+                                <h1 style={{ fontSize: '2.5rem', fontWeight: '600' }}>No Inventory Ongoing</h1>
+                                <p className="text-muted" style={{ fontSize: '1.2rem' }}>
+                                    Schedule: <span style={{ fontSize: '1.4rem', fontWeight: '500' }}>{inventorySchedule}</span>
+                                </p>
+                            </div>
+                            <div className="mt-4" style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ width: '80%', display: 'flex', justifyContent: 'space-between', flexDirection: 'row', padding: '20px' }}>
+                                    {/* Starting Date */}
+                                    <div style={{ marginRight: '20px', width: '40%' }}>
+                                        <label htmlFor="startDate" style={{ fontSize: '1.1rem', fontWeight: '500' }}>Starting Date:</label>
+                                        <input 
+                                            type="date" 
+                                            id="startDate" 
+                                            value={startDate}
+                                            onChange={handleStartDateChange}
+                                            className="form-control"
+                                            style={{ fontSize: '1.1rem', padding: '10px', borderRadius: '8px' }}
+                                        />
                                     </div>
+                                    {/* Closing Date */}
+                                    <div style={{ width: '40%' }}>
+                                        <label htmlFor="endDate" style={{ fontSize: '1.1rem', fontWeight: '500' }}>Closing Date:</label>
+                                        {inventorySchedule !== 'not set' ? (
+                                            <p style={{
+                                                fontSize: '1.2rem', fontWeight: '500', padding: '10px', backgroundColor: '#f8f9fa', 
+                                                borderRadius: '8px', textAlign: 'center'
+                                            }}>
+                                                {endDate}
+                                            </p>  // Display end date as text if schedule is set
+                                        ) : (
+                                            <>
+                                                <input
+                                                    type="date"
+                                                    id="endDate"
+                                                    value={endDate || ''}
+                                                    onChange={(e) => setEndDate(e.target.value)} // Allow user to set end date
+                                                    className="form-control"
+                                                    style={{
+                                                        fontSize: '1.1rem', padding: '10px', borderRadius: '8px',
+                                                        backgroundColor: '#f8f9fa'
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Button */}
+                                <div style={{ width: '80%', display: 'flex', justifyContent: 'center' }}>
+                                    <button
+                                        className='btn sw-bgcolor'
+                                        onClick={() => startInventory()}
+                                        style={{
+                                            padding: '12px 25px', 
+                                            fontSize: '1.2rem', 
+                                            borderRadius: '8px', 
+                                            width: 'auto', 
+                                            marginTop: '20px'
+                                        }}
+                                    >
+                                        Start Inventory
+                                    </button>
                                 </div>
                             </div>
                         </div>
+
                     )}
                 </div>
             </div>
