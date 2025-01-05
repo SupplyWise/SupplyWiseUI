@@ -155,7 +155,6 @@ export default function Sidebar() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                paddingRight: '0px',
                 boxShadow: '4px 0px 5px rgba(0, 0, 0, 0.2)',
             }}
         >
@@ -183,8 +182,8 @@ export default function Sidebar() {
             </div>
     
             {/* Notifications and Profile Section */}
-            <div className="row" style={{ paddingLeft: '0px' }}>
-                <div className="col-12" style={{ paddingLeft: '0px' }}>
+            <div className="row" style={{ padding: '0px' }}>
+                <div className="col-12" style={{ padding: '0px' }}>
                 <hr className="my-0" />
     
                     {/* Notifications */}

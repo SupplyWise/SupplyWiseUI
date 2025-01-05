@@ -43,7 +43,8 @@ export default function SidebarLink({ text, currentPage, selectedRestaurant }) {
                         </div>
                     </div>
                     <div className="row pb-0 m-0">
-                        <div className="col-12 ms-4 ps-0">
+                        <div className="col-2 p-0"></div>
+                        <div className="col-10 ps-0">
                             {restaurantSections.map((section, index) => {
                                 const sectionHref = `${href}/${section.name}`;
                                 return (
