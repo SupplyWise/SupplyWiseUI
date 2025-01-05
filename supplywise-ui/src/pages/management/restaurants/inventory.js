@@ -103,19 +103,24 @@ export default function Inventory() {
             return response.json();
         })
         .then((data) => {
-            const periodicity = data.periodicity.toLowerCase() || 'not set';
+            // Check if the periodicity is NULL and set it as 'not set'
+            const periodicity = (data.periodicity && data.periodicity !== 'NULL') 
+                                ? data.periodicity.toLowerCase() 
+                                : 'not set';
+            
             const customInventoryPeriodicity = data.customInventoryPeriodicity || null;
-    
+        
             setInventorySchedule(periodicity);
-    
+        
             if (periodicity === 'custom') {
                 setCustomInventoryPeriodicity(customInventoryPeriodicity);
             } else {
-                setCustomInventoryPeriodicity(''); // Reset if not CUSTOM
+                setCustomInventoryPeriodicity('');
             }
-    
+        
             console.log("Inventory Schedule Data:", data);
         })
+        
         .catch((error) => console.error('Error fetching inventory schedule:', error));
     };
     
@@ -630,13 +635,19 @@ export default function Inventory() {
                                                 {endDate}
                                             </p>  // Display end date as text if schedule is set
                                         ) : (
-                                            <input
-                                                type="text"
-                                                value={endDate || 'Not Set'}
-                                                readOnly
-                                                className="form-control"
-                                                style={{ fontSize: '1.1rem', padding: '10px', borderRadius: '8px', backgroundColor: '#f8f9fa' }}
-                                            />
+                                            <>
+                                                <input
+                                                    type="date"
+                                                    id="endDate"
+                                                    value={endDate || ''}
+                                                    onChange={(e) => setEndDate(e.target.value)} // Allow user to set end date
+                                                    className="form-control"
+                                                    style={{
+                                                        fontSize: '1.1rem', padding: '10px', borderRadius: '8px',
+                                                        backgroundColor: '#f8f9fa'
+                                                    }}
+                                                />
+                                            </>
                                         )}
                                     </div>
                                 </div>
