@@ -8,6 +8,7 @@ export default function DashboardLayout({ children }) {
 
     const [companyDetails, setCompanyDetails] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [customInventoryPeriodicity, setCustomInventoryPeriodicity] = useState('');
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children }) {
     const handleCompanyCreation = async (e) => {
         e.preventDefault();
         setIsLoading(true); // Show the loader
-
+    
         const token = Cookies.get('access_token');
         const refreshToken = Cookies.get('refresh_token');
         try {
@@ -84,11 +85,10 @@ export default function DashboardLayout({ children }) {
             }
     
             const company = await companyResponse.json();
-    
             if (!company) {
                 throw new Error('Company creation failed: No company data returned');
             }
-
+    
             setCompanyDetails(company);
             sessionStorage.setItem('company', JSON.stringify(company));
     
@@ -124,8 +124,15 @@ export default function DashboardLayout({ children }) {
                 name: restaurantToCreate,
                 company,
             };
-            if (scheduleInventory) restaurantData.periodicity = inventoryPeriodicity;
-
+    
+            // Add periodicity and customPeriodicty if the schedule is set
+            if (scheduleInventory) {
+                restaurantData.periodicity = inventoryPeriodicity;
+                if (inventoryPeriodicity === 'CUSTOM' && customInventoryPeriodicity) {
+                    restaurantData.customInventoryPeriodicity = customInventoryPeriodicity;
+                }
+            }
+    
             const restaurantResponse = await fetch(`${API_URL}/restaurants`, {
                 method: 'POST',
                 headers: {
@@ -138,9 +145,9 @@ export default function DashboardLayout({ children }) {
             if (!restaurantResponse.ok) {
                 throw new Error('Failed to create restaurant');
             }
+    
             const restaurantMessage = await restaurantResponse.text();
             console.log(`Restaurant created: ${restaurantMessage}`);
-
             window.location.reload();
         } catch (error) {
             console.error(`Error: ${error.message}`);
@@ -219,19 +226,35 @@ export default function DashboardLayout({ children }) {
                                             </div>
                                             {scheduleInventory && (
                                                 <div className="form-group mt-3">
-                                                    <label htmlFor="inventoryPeriodicity">Inventory Periodicity</label>
-                                                    <select
-                                                        id="inventoryPeriodicity"
-                                                        className="form-control"
-                                                        value={inventoryPeriodicity}
-                                                        onChange={(e) => setInventoryPeriodicity(e.target.value)}
-                                                    >
-                                                        <option value="DAILY">Daily</option>
-                                                        <option value="WEEKLY">Weekly</option>
-                                                        <option value="MONTHLY">Monthly</option>
-                                                        <option value="YEARLY">Yearly</option>
-                                                        <option value="CUSTOM">Custom</option>
-                                                    </select>
+                                                    <div>
+                                                        <label htmlFor="inventoryPeriodicity">Inventory Periodicity</label>
+                                                        <select
+                                                            id="inventoryPeriodicity"
+                                                            className="form-control"
+                                                            value={inventoryPeriodicity}
+                                                            onChange={(e) => setInventoryPeriodicity(e.target.value)}
+                                                        >
+                                                            <option value="DAILY">Daily</option>
+                                                            <option value="WEEKLY">Weekly</option>
+                                                            <option value="MONTHLY">Monthly</option>
+                                                            <option value="YEARLY">Yearly</option>
+                                                            <option value="CUSTOM">Custom</option>
+                                                        </select>
+                                                    </div>
+
+                                                    {inventoryPeriodicity === 'CUSTOM' && (
+                                                        <div>
+                                                            <label htmlFor="customInventoryPeriodicity">Custom Number of Days</label>
+                                                            <input
+                                                                type="number"
+                                                                id="customInventoryPeriodicity"
+                                                                className="form-control"
+                                                                value={customInventoryPeriodicity}
+                                                                onChange={(e) => setCustomInventoryPeriodicity(e.target.value)}
+                                                                placeholder="Enter the number of days"
+                                                            />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                             <button

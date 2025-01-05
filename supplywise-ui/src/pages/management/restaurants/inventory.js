@@ -26,6 +26,7 @@ export default function Inventory() {
     const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Today's date
     const [endDate, setEndDate] = useState(''); // Default empty, will be calculated if needed
     const [isEndDateDisabled, setIsEndDateDisabled] = useState(false);
+    const [customInventoryPeriodicity, setCustomInventoryPeriodicity] = useState(''); 
 
     // Fetch user role from session or context
     useEffect(() => {
@@ -87,7 +88,6 @@ export default function Inventory() {
 
     const fetchInventorySchedule = () => {
         const restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
-        console.log("Restaurant ID:", restaurantId);
         fetch(`${API_URL}/restaurants/${restaurantId}/schedule`, {
             method: 'GET',
             headers: {
@@ -95,22 +95,30 @@ export default function Inventory() {
                 'Authorization': `Bearer ${Cookies.get('access_token')}`,
             },
         })
-            .then((response) => {
-                if (!response.ok) {
-                    console.error(`Error: ${response.status} ${response.statusText}`);
-                    throw new Error('Failed to fetch inventory schedule');
-                }
-                return response.text();
-            })
-            .then((data) => {
-                console.log("Inventory Schedule Data:", data);
-                const periodicity = typeof data === 'string' ? JSON.parse(data).periodicity : data.periodicity;
-                setInventorySchedule(periodicity.toLowerCase() || 'not set');
-                console.log("Formatted Schedule:", periodicity.toLowerCase());
-            })
-            
-            .catch((error) => console.error('Error fetching inventory schedule:', error));
+        .then((response) => {
+            if (!response.ok) {
+                console.error(`Error: ${response.status} ${response.statusText}`);
+                throw new Error('Failed to fetch inventory schedule');
+            }
+            return response.json();
+        })
+        .then((data) => {
+            const periodicity = data.periodicity.toLowerCase() || 'not set';
+            const customInventoryPeriodicity = data.customInventoryPeriodicity || null;
+    
+            setInventorySchedule(periodicity);
+    
+            if (periodicity === 'custom') {
+                setCustomInventoryPeriodicity(customInventoryPeriodicity);
+            } else {
+                setCustomInventoryPeriodicity(''); // Reset if not CUSTOM
+            }
+    
+            console.log("Inventory Schedule Data:", data);
+        })
+        .catch((error) => console.error('Error fetching inventory schedule:', error));
     };
+    
     
     const getDefaultEndDate = (startDate, schedule) => {
         const start = new Date(startDate);
@@ -127,10 +135,16 @@ export default function Inventory() {
             case 'yearly':
                 start.setFullYear(start.getFullYear() + 1);
                 break;
+            case 'custom':
+                if (customInventoryPeriodicity) {
+                    console.log('customInventoryPeriodicity', customInventoryPeriodicity);
+                    start.setDate(start.getDate() + parseInt(customInventoryPeriodicity));
+                }
+                break;
             default:
                 return ''; // Return empty if schedule is "Not Set"
         }
-        return start.toISOString().split('T')[0];  // Return formatted date as YYYY-MM-DD
+        return start.toISOString().split('T')[0];
     };
 
     const handleStartDateChange = (event) => {
@@ -161,7 +175,6 @@ export default function Inventory() {
         const startDate = document.getElementById('startDate').value || today;
     
         let endDateInput = null;
-        
         let endDate = '';
         
         if (inventorySchedule === 'not set') {
