@@ -27,6 +27,11 @@ export default function Inventory() {
     const [endDate, setEndDate] = useState(''); // Default empty, will be calculated if needed
     const [isEndDateDisabled, setIsEndDateDisabled] = useState(false);
     const [customInventoryPeriodicity, setCustomInventoryPeriodicity] = useState(''); 
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState('');
+    const [customDays, setCustomDays] = useState('');
+    const [scheduleError, setScheduleError] = useState('');
+    
 
     // Fetch user role from session or context
     useEffect(() => {
@@ -123,7 +128,39 @@ export default function Inventory() {
         
         .catch((error) => console.error('Error fetching inventory schedule:', error));
     };
-    
+
+    const handleScheduleUpdate = async () => {
+        try {
+            const restaurantId = JSON.parse(sessionStorage.getItem('selectedRestaurant')).id;
+            let url = `${API_URL}/restaurants/${restaurantId}/schedule?periodicity=${selectedSchedule}`;
+            
+            if (selectedSchedule === 'CUSTOM' && customDays) {
+                url += `&customInventoryPeriodicity=${customDays}`;
+            }
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}`,
+                },
+            });
+
+            if (!response.ok) throw new Error('Failed to update schedule');
+
+            setInventorySchedule(selectedSchedule.toLowerCase());
+            if (selectedSchedule === 'CUSTOM') {
+                setCustomInventoryPeriodicity(customDays);
+            } else {
+                setCustomInventoryPeriodicity('');
+            }
+            setIsScheduleModalOpen(false);
+            setScheduleError('');
+            fetchInventorySchedule();
+        } catch (error) {
+            setScheduleError('Failed to update schedule. Please try again.');
+        }
+    };    
     
     const getDefaultEndDate = (startDate, schedule) => {
         const start = new Date(startDate);
@@ -608,6 +645,24 @@ export default function Inventory() {
                                 <h1 style={{ fontSize: '2.5rem', fontWeight: '600' }}>No Inventory Ongoing</h1>
                                 <p className="text-muted" style={{ fontSize: '1.2rem' }}>
                                     Schedule: <span style={{ fontSize: '1.4rem', fontWeight: '500' }}>{inventorySchedule}</span>
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedSchedule(inventorySchedule.toUpperCase());
+                                            setCustomDays(customInventoryPeriodicity || '');
+                                            setIsScheduleModalOpen(true);
+                                        }}
+                                        className="btn btn-outline-primary"
+                                        style={{ 
+                                            padding: '4px 12px',
+                                            fontSize: '0.9rem',
+                                            borderRadius: '6px',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            marginLeft: '14px',
+                                        }}
+                                    >
+                                        Edit Schedule
+                                    </button>
                                 </p>
                             </div>
                             <div className="mt-4" style={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
@@ -820,6 +875,75 @@ export default function Inventory() {
                                     setEditingItem(null);
                                 }}>Cancel</button>
                                 <button type="button" className="btn sw-bgcolor" onClick={handleEditSubmit}>Save Changes</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {isScheduleModalOpen && (
+                <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0, 0, 0, 0.5)' }} tabIndex="-1" role="dialog">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Edit Inventory Schedule</h5>
+                                <button 
+                                    type="button" 
+                                    className="btn-close" 
+                                    onClick={() => setIsScheduleModalOpen(false)}
+                                    aria-label="Close"
+                                ></button>
+                            </div>
+                            <div className="modal-body p-4">
+                                <div className="mb-3">
+                                    <label className="form-label">Schedule Frequency</label>
+                                    <select 
+                                        className="form-select"
+                                        value={selectedSchedule}
+                                        onChange={(e) => setSelectedSchedule(e.target.value)}
+                                    >
+                                        <option value="NOT_SET">Not Set</option>
+                                        <option value="DAILY">Daily</option>
+                                        <option value="WEEKLY">Weekly</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                        <option value="YEARLY">Yearly</option>
+                                        <option value="CUSTOM">Custom</option>
+                                    </select>
+                                </div>
+
+                                {selectedSchedule === 'CUSTOM' && (
+                                    <div className="mb-3">
+                                        <label className="form-label">Custom Days Interval</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={customDays}
+                                            onChange={(e) => setCustomDays(e.target.value)}
+                                            min="1"
+                                            placeholder="Enter number of days"
+                                        />
+                                    </div>
+                                )}
+
+                                {scheduleError && (
+                                    <div className="alert alert-danger mt-3">{scheduleError}</div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    type="button" 
+                                    className="btn btn-secondary" 
+                                    onClick={() => setIsScheduleModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="button" 
+                                    className="btn sw-bgcolor"
+                                    onClick={handleScheduleUpdate}
+                                    disabled={selectedSchedule === 'CUSTOM' && !customDays}
+                                >
+                                    Save Changes
+                                </button>
                             </div>
                         </div>
                     </div>
