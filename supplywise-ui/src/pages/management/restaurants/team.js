@@ -9,7 +9,32 @@ import ManagerCard from "@/components/managerCard";
 
 export default function Team() {
 
+    const [userRoles, setUserRoles] = useState(null);
+
+    // Fetch user role from session or context
     useEffect(() => {
+        const token = Cookies.get('access_token');
+        fetch(`${API_URL}/auth/roles`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Include the access token
+            },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user roles');
+                }
+                return response.text();
+            })
+            .then((data) => {
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim().replace('ROLE_', ''));
+                setUserRoles(rolesList);
+            })
+            .catch((error) => {
+                console.error("Error fetching company details:", error.message);
+            });
+
         getManagers();
     }, []);
 
@@ -47,43 +72,51 @@ export default function Team() {
             return;
         }
         
-        if (newUserRole == 'manager') {
-            try {
-                const requestBody = {
-                    username: newUserName,
-                    email: newUserEmail,
-                    company_id: sessionStorage.getItem('company') || null, // Replace with appropriate value or logic for `company_id`
-                    restaurant_id: sessionStorage.getItem('selectedRestaurant') || null // Replace with appropriate value or logic for `restaurant_id`
-                };
-    
-                const managerResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/create-manager`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${Cookies.get('access_token')}` // Replace `authToken` with your authentication token variable
-                    },
-                    body: JSON.stringify(requestBody)
-                });
-    
-                if (!managerResponse.ok) {
-                    throw new Error('Failed to create manager');
-                }
-    
-                const responseData = await managerResponse.json();
-                console.log('Manager created successfully:', responseData);
-    
-            } catch (error) {
-                console.error('Error creating manager:', error);
+        try {
+            const requestBody = {
+                username: newUserName,
+                email: newUserEmail,
+                user_role: newUserRole,
+                company_id: sessionStorage.getItem('company') || null,
+                restaurant_id: JSON.parse(sessionStorage.getItem('selectedRestaurant'))?.id || null
+            };
+
+            console.log('Request body:', requestBody);
+
+            const managerResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/create-manager`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Cookies.get('access_token')}` // Replace `authToken` with your authentication token variable
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!managerResponse.ok) {
+                throw new Error('Failed to create manager');
             }
+
+            const responseData = await managerResponse.json();
+            console.log('Manager created successfully:', responseData);
+
+        } catch (error) {
+            console.error('Error creating manager:', error);
         }
-    
+
         setIsAddingManager(false);
+        getManagers();
         // TODO: add toast to show success
     };
 
     const getManagers = async () => {
         try {
-            const response = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/get-managers`, {
+            let url = 'https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/get-managers';
+            if (userRoles.includes('ADMIN') || userRoles.includes('FRANCHISE_OWNER')) {
+                const restaurantId = JSON.parse(sessionStorage.getItem("selectedRestaurant")).id;
+                url += `?restaurant_id=${restaurantId}`;
+            }
+
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
