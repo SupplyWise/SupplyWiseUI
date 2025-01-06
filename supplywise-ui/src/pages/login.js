@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie'; // Import js-cookie
-//import { API_URL } from '../components/api_url';
+import { API_URL } from '../../api_url'; // Import API_URL
 import Head from 'next/head';
 
 const Login = () => {
