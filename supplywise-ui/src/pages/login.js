@@ -12,7 +12,7 @@ const Login = () => {
 
         if (code) {
             // TODO - replace with general API URL when in production
-            fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/auth/tokens`, {
+            fetch(`${API_URL}/tokens/exchange`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ const Login = () => {
                 .then(response => response.json())
                 .then(data => {
                     console.log("Token exchange successful", data);
-                    const { access_token, refresh_token, expires_in, username } = JSON.parse(data.body);
+                    const { access_token, refresh_token, expires_in, username } = data;
 
                     // Store tokens in cookies
                     Cookies.set('access_token', access_token, { expires: expires_in / 86400 });

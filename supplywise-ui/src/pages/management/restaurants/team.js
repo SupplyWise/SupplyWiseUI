@@ -83,7 +83,7 @@ export default function Team() {
 
             console.log('Request body:', requestBody);
 
-            const managerResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/create-manager`, {
+            const managerResponse = await fetch(`https://mamajuc0i9.execute-api.eu-west-1.amazonaws.com/api/user-management/create-manager`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export default function Team() {
 
     const getManagers = async () => {
         try {
-            let url = 'https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/get-managers';
+            let url = 'https://mamajuc0i9.execute-api.eu-west-1.amazonaws.com/api/user-management/get-managers';
             if (userRoles.includes('ADMIN') || userRoles.includes('FRANCHISE_OWNER')) {
                 const restaurantId = JSON.parse(sessionStorage.getItem("selectedRestaurant")).id;
                 url += `?restaurant_id=${restaurantId}`;
@@ -140,7 +140,7 @@ export default function Team() {
 
     const deleteManager = async (username) => {
         try {
-            const response = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/user-management/delete-manager?target_username=${username}`, {
+            const response = await fetch(`https://mamajuc0i9.execute-api.eu-west-1.amazonaws.com/api/user-management/delete-manager?target_username=${username}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

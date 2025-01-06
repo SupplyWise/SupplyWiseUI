@@ -56,9 +56,10 @@ export default function Restaurants() {
             })
             .then((message) => {
                 console.log(message);
+                window.location.reload();
             })
             .catch((error) => console.error(error));
-    window.location.reload();
+    
 };
 
 
