@@ -102,6 +102,15 @@
   background-color: #d3d2d2 !important;
 }
 
+.sidebar-link:hover {
+  background-color: #ececec !important;
+  color: black !important;
+}
+
+.sidebar-link.active {
+  background-color: #d3d2d2 !important;
+}
+
 .login-button {
   background-color: #f65835;
   color: white;
