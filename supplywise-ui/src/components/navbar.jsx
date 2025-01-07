@@ -28,7 +28,7 @@ export default function Navbar() {
                 </button>
                 <div className="collapse navbar-collapse" id="navbarResponsive">
                     <ul className="navbar-nav ms-auto fs-5">
-                        <li className="nav-item mx-0 mx-lg-1">
+                        <li className="nav-item d-none mx-0 mx-lg-1">
                             <Link className={`nav-link py-3 px-0 px-lg-3 rounded text-black`} href="/about">
                                 Documentation
                             </Link>
