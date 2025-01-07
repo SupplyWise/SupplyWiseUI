@@ -202,6 +202,12 @@ export default function Inventory() {
         }
     };
 
+    const formatDate = (date) => {
+        if (!date) return '';
+        const parsedDate = new Date(date);
+        return `${String(parsedDate.getMonth() + 1).padStart(2, '0')}/${String(parsedDate.getDate()).padStart(2, '0')}/${parsedDate.getFullYear()}`;
+    };
+
     useEffect(() => {
         if (inventorySchedule !== 'not set') {
             setIsEndDateDisabled(true);  // Disable end date field if schedule is defined
@@ -687,7 +693,7 @@ export default function Inventory() {
                                                 fontSize: '1.2rem', fontWeight: '500', padding: '10px', backgroundColor: '#f8f9fa', 
                                                 borderRadius: '8px', textAlign: 'center'
                                             }}>
-                                                {endDate}
+                                                {formatDate(endDate)}
                                             </p>  // Display end date as text if schedule is set
                                         ) : (
                                             <>
