@@ -143,7 +143,7 @@ export default function Restaurants() {
                                 <label style={{ width: '200%' }} className='form-label'>Filter by Date Interval</label>
                                 <input type="date" value={dateStart} onChange={(e) => setDateStart(e.target.value)} className='form-control' />
                                 <input type="date" value={dateEnd} onChange={(e) => setDateEnd(e.target.value)} className='form-control' />
-                                <button className='btn sw-bgcolor ms-2' onClick={() => { setDateStart(''); setDateEnd('') }}>Clear</button>
+                                <button className='btn sw-button ms-2' onClick={() => { setDateStart(''); setDateEnd('') }}>Clear</button>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'row' }}>
                                 <label style={{ width: '200%' }} className='form-label'>Closed By</label>

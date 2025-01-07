@@ -149,7 +149,7 @@ export default function Sidebar() {
 
     return (
         <nav
-            className="col-2 bg-light vh-100 sw-bgcolor"
+            className="col-2 bg-light vh-100"
             style={{
                 backgroundColor: '#f8f9fa',
                 display: 'flex',

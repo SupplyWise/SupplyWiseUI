@@ -10,6 +10,19 @@
     background-color: #f65835;
 }
 
+.sw-button{
+  background-color: #f65835;
+  color: #fff;
+  border: 1px solid #f65835;
+}
+
+.sw-button:hover, .sw-button:active:focus, .sw-button:focus{
+  background-color: #fff;
+  color: #f65835;
+  border: 1px solid #f65835;
+}
+
+
 .sw-color{
     color: #f65835;
 }
@@ -87,4 +100,29 @@
 
 .nav-link.active {
   background-color: #d3d2d2 !important;
+}
+
+.login-button {
+  background-color: #f65835;
+  color: white;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+  outline: none;
+}
+
+.login-button:hover {
+  background-color: #fff;
+  color: #f65835;
+  box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.register-button {
+  color: #000;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.2);
+  outline: none;
+}
+
+.register-button:hover {
+  background-color: #ddd;
+  color: black !important;
+  box-shadow: 6px 6px 15px rgba(0, 0, 0, 0.3);
 }

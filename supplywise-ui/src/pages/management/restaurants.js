@@ -67,7 +67,7 @@ export default function Restaurants() {
       <div className="row">
         <div className="col"></div>
         <div className="col-auto">
-          <button type="button" className="btn sw-bgcolor" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
+          <button type="button" className="btn sw-button" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function Restaurants() {
                   <label htmlFor="restaurantName" className="form-label">Restaurant Name</label>
                   <input type="text" className="form-control" id="restaurantName" value={restaurantToCreate} onChange={(e) => setRestaurantToCreate(e.target.value)} required />
                 </div>
-                <button type="submit" className="btn sw-bgcolor">Create</button>
+                <button type="submit" className="btn sw-button">Create</button>
               </form>
             </div>
           </div>
