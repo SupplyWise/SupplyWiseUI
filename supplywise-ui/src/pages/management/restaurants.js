@@ -32,35 +32,42 @@ export default function Restaurants() {
       }
     };
     fetchRestaurants();
-
-
-
   }, []);
 
-  const handleRestaurantCreation = (e) => {
+  const handleRestaurantCreation = async (e) => {
     e.preventDefault();
 
-        fetch(`${API_URL}/restaurants`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${Cookies.get('access_token')}`,
-            },
-            body: JSON.stringify({ name: restaurantToCreate, company: JSON.parse(sessionStorage.getItem('company')) }),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to create restaurant');
-                }
-                return response.text();
-            })
-            .then((message) => {
-                console.log(message);
-            })
-            .catch((error) => console.error(error));
-    window.location.reload();
-};
+    const company = JSON.parse(sessionStorage.getItem('company'));
 
+    try {
+      const response = await fetch(`${API_URL}/restaurants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Cookies.get('access_token')}`,
+        },
+        body: JSON.stringify({ name: restaurantToCreate, company }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create restaurant: ${response.statusText}`);
+      }
+  
+      // Add the new restaurant to the list without reloading
+      const newRestaurant = {
+        name: restaurantToCreate,
+        createdAt: new Date().toISOString()
+      };
+      setRestaurants((prevRestaurants) => [...prevRestaurants, newRestaurant]);
+
+      // Clear the input field and close the modal
+      setRestaurantToCreate('');
+      document.querySelector('#createRestaurantModal .btn-close').click();
+      console.log("Restaurant created successfully!");
+    } catch (error) {
+      console.error("Error creating restaurant:", error);
+    }
+  };
 
   return (
     <DashboardLayout>
