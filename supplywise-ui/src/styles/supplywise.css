@@ -90,16 +90,16 @@
   color: #f65835;
 }
 
-.nav-item:hover {
-  color: #f65835;
-}
-
 .nav-link:hover {
   color: #f65835 !important;
 }
 
 .nav-link.active {
   background-color: #d3d2d2 !important;
+}
+
+.button-link:hover {
+  color: #f65835 !important;
 }
 
 .sidebar-link:hover {

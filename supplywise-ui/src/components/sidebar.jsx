@@ -230,13 +230,11 @@ export default function Sidebar() {
                                     style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        cursor: 'pointer',
                                     }}
                                 >
                                     <FontAwesomeIcon
                                         icon={faUser}
                                         style={{ width: '1.5vw', marginRight: '10px' }}
-                                        onClick={() => goToProfile()}
                                     />
                                     <span>{username}</span>
                                 </div>
@@ -244,6 +242,7 @@ export default function Sidebar() {
                                 {/* Logout */}
                                 <FontAwesomeIcon
                                     icon={faSignOutAlt}
+                                    className='button-link'
                                     style={{ width: '1.5vw', cursor: 'pointer' }}
                                     onClick={() => logout()}
                                 />
