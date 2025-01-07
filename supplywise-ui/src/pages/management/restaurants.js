@@ -52,18 +52,13 @@ export default function Restaurants() {
       if (!response.ok) {
         throw new Error(`Failed to create restaurant: ${response.statusText}`);
       }
-  
-      // Add the new restaurant to the list without reloading
-      const newRestaurant = {
-        name: restaurantToCreate,
-        createdAt: new Date().toISOString()
-      };
-      setRestaurants((prevRestaurants) => [...prevRestaurants, newRestaurant]);
+
 
       // Clear the input field and close the modal
       setRestaurantToCreate('');
       document.querySelector('#createRestaurantModal .btn-close').click();
       console.log("Restaurant created successfully!");
+      window.location.reload();
     } catch (error) {
       console.error("Error creating restaurant:", error);
     }
