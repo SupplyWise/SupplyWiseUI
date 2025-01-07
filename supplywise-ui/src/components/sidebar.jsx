@@ -73,10 +73,17 @@ export default function Sidebar() {
                 if (!response.ok) throw new Error('Failed to fetch restaurants');
                 return response.json();
             })
-            .then((data) => {
-                data.forEach((restaurant) => {
-                    fetchNotificationsForRestaurant(restaurant.id, token);
-                });
+            .then((restaurants) => {
+                const notificationPromises = restaurants.map((restaurant) =>
+                    fetchNotificationsForRestaurant(restaurant.id, token)
+                );
+
+                Promise.all(notificationPromises)
+                    .then((notificationsArray) => {
+                        const allNotifications = notificationsArray.flat(); // Combine all notifications into a single array
+                        setNotificationsAndAlertCount(allNotifications);
+                    })
+                    .catch((error) => console.error('Error fetching restaurant notifications:', error));
             })
             .catch((error) => console.error('Error fetching restaurants:', error));
     };
@@ -101,7 +108,7 @@ export default function Sidebar() {
     };
 
     const fetchNotificationsForRestaurant = (restaurantId, token) => {
-        fetch(`${API_URL}/notifications/${restaurantId}`, {
+        return fetch(`${API_URL}/notifications/${restaurantId}`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -111,11 +118,9 @@ export default function Sidebar() {
                 if (!response.ok) throw new Error("Failed to fetch notifications");
                 return response.json();
             })
-            .then((data) => {
-                setNotificationsAndAlertCount(data);
-            })
             .catch((error) => {
-                console.error("Error fetching notifications for restaurant:", error);
+                console.error(`Error fetching notifications for restaurant ${restaurantId}:`, error);
+                return []; // Return an empty array if there's an error for a specific restaurant
             });
     };
 
@@ -127,7 +132,7 @@ export default function Sidebar() {
     function goToProfile() {
         if (!sessionUser || sessionUser === null) {
             alert('You must be logged in to access your profile.');
-            return
+            return;
         }
         window.location.href = '/profile/user';
     }
@@ -184,7 +189,7 @@ export default function Sidebar() {
             {/* Notifications and Profile Section */}
             <div className="row" style={{ padding: '0px' }}>
                 <div className="col-12" style={{ padding: '0px' }}>
-                <hr className="my-0" />
+                    <hr className="my-0" />
     
                     {/* Notifications */}
                     <div
@@ -193,8 +198,8 @@ export default function Sidebar() {
                             fontSize: '1.1em', // Match the font size of username
                             fontWeight: 'bold', // Keep bold for consistency
                         }}
-                    >                        
-                    <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', padding: '0 0 -5px 10px', marginRight: '10px'}} />
+                    >
+                        <FontAwesomeIcon icon={faBell} style={{ width: '1.5vw', marginRight: '10px' }} />
                         <Link href="/alerts" className="text-dark text-decoration-none">
                             Notifications
                         </Link>
@@ -225,7 +230,7 @@ export default function Sidebar() {
                                     padding: 10,
                                 }}
                             >
-                                {/* Username */}
+                            {/* Username */}
                                 <div
                                     style={{
                                         display: 'flex',
@@ -252,5 +257,5 @@ export default function Sidebar() {
                 </div>
             </div>
         </nav>
-    );     
+    );
 }
