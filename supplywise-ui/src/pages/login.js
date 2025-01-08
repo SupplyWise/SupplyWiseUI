@@ -11,7 +11,6 @@ const Login = () => {
         const { code } = router.query;
 
         if (code) {
-            // TODO - replace with general API URL when in production
             fetch(`${API_URL}/tokens/exchange`, {
                 method: 'POST',
                 headers: {
