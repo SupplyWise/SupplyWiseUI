@@ -259,7 +259,7 @@ export default function DashboardLayout({ children }) {
                                             )}
                                             <button
                                                 type="submit"
-                                                className="btn sw-bgcolor mt-3"
+                                                className="btn sw-button mt-3"
                                                 disabled={isLoading}
                                             >
                                                 {isLoading ? "Creating..." : "Create"}

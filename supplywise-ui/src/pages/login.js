@@ -66,7 +66,7 @@ const styles = {
         width: '50px',
         height: '50px',
         border: '6px solid #ddd',
-        borderTop: '6px solid #0070f3',
+        borderTop: '6px solid #f65835',
         borderRadius: '50%',
         animation: 'spin 1s linear infinite',
     },

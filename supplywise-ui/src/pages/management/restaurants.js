@@ -32,13 +32,26 @@ export default function Restaurants() {
       }
     };
     fetchRestaurants();
-
-
-
   }, []);
 
-  const handleRestaurantCreation = (e) => {
+  const handleRestaurantCreation = async (e) => {
     e.preventDefault();
+
+    const company = JSON.parse(sessionStorage.getItem('company'));
+
+    try {
+      const response = await fetch(`${API_URL}/restaurants`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Cookies.get('access_token')}`,
+        },
+        body: JSON.stringify({ name: restaurantToCreate, company }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create restaurant: ${response.statusText}`);
+      }
 
         fetch(`${API_URL}/restaurants`, {
             method: 'POST',
@@ -62,13 +75,22 @@ export default function Restaurants() {
     
 };
 
+      // Clear the input field and close the modal
+      setRestaurantToCreate('');
+      document.querySelector('#createRestaurantModal .btn-close').click();
+      console.log("Restaurant created successfully!");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error creating restaurant:", error);
+    }
+  };
 
   return (
     <DashboardLayout>
       <div className="row">
         <div className="col"></div>
         <div className="col-auto">
-          <button type="button" className="btn sw-bgcolor" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
+          <button type="button" className="btn sw-button" data-bs-toggle="modal" data-bs-target="#createRestaurantModal">Add Restaurant</button>
         </div>
       </div>
 
@@ -86,7 +108,7 @@ export default function Restaurants() {
                   <label htmlFor="restaurantName" className="form-label">Restaurant Name</label>
                   <input type="text" className="form-control" id="restaurantName" value={restaurantToCreate} onChange={(e) => setRestaurantToCreate(e.target.value)} required />
                 </div>
-                <button type="submit" className="btn sw-bgcolor">Create</button>
+                <button type="submit" className="btn sw-button">Create</button>
               </form>
             </div>
           </div>

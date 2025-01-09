@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -200,6 +200,12 @@ export default function Inventory() {
         } else {
             setEndDate('');
         }
+    };
+
+    const formatDate = (date) => {
+        if (!date) return '';
+        const parsedDate = new Date(date);
+        return `${String(parsedDate.getMonth() + 1).padStart(2, '0')}/${String(parsedDate.getDate()).padStart(2, '0')}/${parsedDate.getFullYear()}`;
     };
 
     useEffect(() => {
@@ -529,6 +535,42 @@ export default function Inventory() {
 
     };
 
+    const fileInputRef = useRef(null);
+
+    const uploadInventory = () => {
+        fileInputRef.current.value = "";
+        fileInputRef.current.click();
+    };
+
+    const handleFileToImportChange = async (event) => {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("https://mamajuc0i9.execute-api.eu-west-1.amazonaws.com/api/csv/import", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.text();
+                alert("Upload bem-sucedido!");
+                console.log("Resposta da API:", result);
+            } else {
+                alert("Erro no upload do ficheiro!");
+                console.error("Erro:", await response.text());
+            }
+        } catch (error) {
+            console.error("Erro ao fazer upload:", error);
+            alert("Erro no upload do ficheiro!");
+        }
+    };
+
+
     return (
         <DashboardLayout>
             <div style={{ padding: '20px' }}>
@@ -541,7 +583,7 @@ export default function Inventory() {
                                 <div className='mt-3 row'>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <input type="text" placeholder='Search' onChange={(e) => setTextFilter(e.target.value)} />
-                                        <button className='btn sw-bgcolor' onClick={() => addProduct()}>Add Product</button>
+                                        <button className='btn sw-button' onClick={() => addProduct()}>Add Product</button>
                                     </div>
                                     <table className="table table-striped mt-4" style={{ border: '2px solid black' }}>
                                         <thead>
@@ -599,14 +641,14 @@ export default function Inventory() {
                                                     </td>
                                                     <td>
                                                         <button 
-                                                            className='btn btn-danger' 
+                                                            className='btn btn-dark' 
                                                             onClick={() => removeProduct(product.id)}
                                                             title="Delete Item"
                                                         >
                                                             <FontAwesomeIcon style={{ width: '.9vw' }} icon={faTrash} />
                                                         </button>
                                                         <button 
-                                                            className='btn btn-primary ms-2' 
+                                                            className='btn sw-button ms-2' 
                                                             onClick={() => editProduct(product.id)}
                                                             title="Edit Item"
                                                         >
@@ -629,7 +671,16 @@ export default function Inventory() {
                                         </div>
                                     <div className="d-flex flex-column align-items-center mt-4">
                                         <div className='row w-75'>
-                                            <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
+                                            {/* O input fica oculto para ficar mais bonito e é ativado quando se clica no botao */}
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                ref={fileInputRef}
+                                                onChange={handleFileToImportChange}
+                                                style={{ display: "none" }}
+                                            />
+
+                                            <button onClick={() => uploadInventory()} className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
                                         </div>
                                         <div className='row w-75'>
                                             <button className='btn btn-secondary' onClick={() => endInventory()} >Close Inventory</button>
@@ -651,7 +702,7 @@ export default function Inventory() {
                                             setCustomDays(customInventoryPeriodicity || '');
                                             setIsScheduleModalOpen(true);
                                         }}
-                                        className="btn btn-outline-primary"
+                                        className="btn sw-button"
                                         style={{ 
                                             padding: '4px 12px',
                                             fontSize: '0.9rem',
@@ -687,7 +738,7 @@ export default function Inventory() {
                                                 fontSize: '1.2rem', fontWeight: '500', padding: '10px', backgroundColor: '#f8f9fa', 
                                                 borderRadius: '8px', textAlign: 'center'
                                             }}>
-                                                {endDate}
+                                                {formatDate(endDate)}
                                             </p>  // Display end date as text if schedule is set
                                         ) : (
                                             <>
@@ -709,7 +760,7 @@ export default function Inventory() {
                                 {/* Button */}
                                 <div style={{ width: '80%', display: 'flex', justifyContent: 'center' }}>
                                     <button
-                                        className='btn sw-bgcolor'
+                                        className='btn sw-button'
                                         onClick={() => startInventory()}
                                         style={{
                                             padding: '12px 25px', 
@@ -749,7 +800,7 @@ export default function Inventory() {
                                                 onChange={(e) => setBarcodeInput(e.target.value)}
                                                 style={{ width: '60%' }}
                                             />
-                                            <button type="button" style={{ width: '30%' }} className="btn sw-bgcolor ms-4 mt-3" disabled={barcodeInput == ''} onClick={() => handleBarcodeInput()}>Search</button>
+                                            <button type="button" style={{ width: '30%' }} className="btn sw-button ms-4 mt-3" disabled={barcodeInput == ''} onClick={() => handleBarcodeInput()}>Search</button>
                                         </div>
 
                                         {newItemStockFieldsVisible && (
@@ -798,7 +849,7 @@ export default function Inventory() {
                                         <button type="button" className="btn btn-secondary" onClick={() => setIsAddProductModalOpen(false)}>Close</button>
                                         <button
                                             type="button"
-                                            className="btn sw-bgcolor"
+                                            className="btn sw-button"
                                             disabled={newItemStockQtt === 0 || newItemStockExpirationDate === null || newProduct.name === ''}
                                             onClick={() => addItemStock()}
                                         >
@@ -874,7 +925,7 @@ export default function Inventory() {
                                     setIsEditModalOpen(false);
                                     setEditingItem(null);
                                 }}>Cancel</button>
-                                <button type="button" className="btn sw-bgcolor" onClick={handleEditSubmit}>Save Changes</button>
+                                <button type="button" className="btn sw-button" onClick={handleEditSubmit}>Save Changes</button>
                             </div>
                         </div>
                     </div>
@@ -938,7 +989,7 @@ export default function Inventory() {
                                 </button>
                                 <button 
                                     type="button" 
-                                    className="btn sw-bgcolor"
+                                    className="btn sw-button"
                                     onClick={handleScheduleUpdate}
                                     disabled={selectedSchedule === 'CUSTOM' && !customDays}
                                 >

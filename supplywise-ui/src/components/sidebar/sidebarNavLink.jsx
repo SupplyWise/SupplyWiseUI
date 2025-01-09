@@ -25,7 +25,7 @@ export default function SidebarLink({ text, currentPage, selectedRestaurant }) {
                 <div className="row my-0">
                     <div className="col-12">
                         <Link
-                            className={`text-black nav-link ${isActive(href) ? "active" : ""}`}
+                            className={`text-black nav-link sidebar-link${isActive(href) ? "active" : ""}`}
                             href={href}
                         >
                             {text}
@@ -43,7 +43,7 @@ export default function SidebarLink({ text, currentPage, selectedRestaurant }) {
                         </div>
                     </div>
                     <div className="row pb-0 m-0">
-                        <div className="col-2 p-0"></div>
+                        <div className="col-2 ps-0"></div>
                         <div className="col-10 ps-0">
                             {restaurantSections.map((section, index) => {
                                 const sectionHref = `${href}/${section.name}`;
@@ -51,7 +51,7 @@ export default function SidebarLink({ text, currentPage, selectedRestaurant }) {
                                     <li key={index} className="nav-item m-0 text-black">
                                         <div className="row align-items-center">
                                             <Link
-                                                className={`nav-link border-start border-1 border-dark-subtle restaurant-section-nav text-start text-uppercase fs-6 d-flex align-items-center ${isActive(sectionHref) ? "active" : ""
+                                                className={`nav-link sidebar-link border-start border-1 border-dark-subtle restaurant-section-nav text-start text-uppercase fs-6 d-flex align-items-center ${isActive(sectionHref) ? "active" : ""
                                                     }`}
                                                 href={sectionHref}
                                             >

@@ -169,7 +169,7 @@ export default function Team() {
                     <div className='mt-3 row'>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <input type="text" style={{ borderRadius: '5px', border: '1px solid black', padding: '5px' }} placeholder="Search by name" onChange={(e) => setTextFilter(e.target.value)} />
-                            <button onClick={openModalAddManager} className='btn sw-bgcolor'>Add Manager</button>
+                            <button onClick={openModalAddManager} className='btn sw-button'>Add Manager</button>
                         </div>
                     </div>
                     <div className="row">
@@ -241,7 +241,7 @@ export default function Team() {
                                     <button type="button" className="btn btn-secondary" onClick={() => setIsAddingManager(false)}>Close</button>
                                     <button
                                         type="button"
-                                        className="btn sw-bgcolor"
+                                        className="btn sw-button"
                                         disabled={newUserName === '' || newUserEmail === '' || newUserRole === ''}
                                         onClick={() => addManager()}
                                     >
