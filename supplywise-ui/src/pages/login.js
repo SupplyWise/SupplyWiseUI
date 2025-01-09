@@ -41,7 +41,7 @@ const Login = () => {
                 <title>Authenticating...</title>
                 <meta name="description" content="SupplyWise application" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <link rel="icon" href="/favicon.ico" />
+                <link rel="icon" href="/Logo_Icon.png" />
             </Head>
             <div style={styles.container}>
                 <div style={styles.spinner}></div>
