@@ -174,14 +174,14 @@ export default function Restaurants() {
                                                 inventory.closingDate !== null &&
                                                 (dateStart === '' || inventory.emissionDate >= dateStart) &&
                                                 (dateEnd === '' || inventory.closingDate <= dateEnd) &&
-                                                (closedBy === '' || inventory.closedBy === closedBy)
+                                                (closedBy === '' || inventory.closedByUser === closedBy)
                                             )
                                             .map((inventory) => (
                                                 <tr key={inventory.id}>
                                                     <td>{inventory.emissionDate.split('T')[0]}</td>
                                                     <td>{inventory.closingDate.split('T')[0]}</td>
                                                     <td>{inventory.items.length}</td>
-                                                    <td>{null}</td>
+                                                    <td>{inventory.closedByUser}</td>
                                                     <td>
                                                         <button className='btn btn-success ms-2'>
                                                             <FontAwesomeIcon style={{ width: '.9vw' }} icon={faDownload} />
