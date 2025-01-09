@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import DashboardLayout from "@/components/managementLayout";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -529,6 +529,42 @@ export default function Inventory() {
 
     };
 
+    const fileInputRef = useRef(null);
+
+    const uploadInventory = () => {
+        fileInputRef.current.value = "";
+        fileInputRef.current.click();
+    };
+
+    const handleFileToImportChange = async (event) => {
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch("https://mamajuc0i9.execute-api.eu-west-1.amazonaws.com/api/csv/import", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.text();
+                alert("Upload bem-sucedido!");
+                console.log("Resposta da API:", result);
+            } else {
+                alert("Erro no upload do ficheiro!");
+                console.error("Erro:", await response.text());
+            }
+        } catch (error) {
+            console.error("Erro ao fazer upload:", error);
+            alert("Erro no upload do ficheiro!");
+        }
+    };
+
+
     return (
         <DashboardLayout>
             <div style={{ padding: '20px' }}>
@@ -629,7 +665,16 @@ export default function Inventory() {
                                         </div>
                                     <div className="d-flex flex-column align-items-center mt-4">
                                         <div className='row w-75'>
-                                            <button className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
+                                            {/* O input fica oculto para ficar mais bonito e é ativado quando se clica no botao */}
+                                            <input
+                                                type="file"
+                                                accept=".csv"
+                                                ref={fileInputRef}
+                                                onChange={handleFileToImportChange}
+                                                style={{ display: "none" }}
+                                            />
+
+                                            <button onClick={() => uploadInventory()} className='btn btn-success mb-2'>Import Inventory <FontAwesomeIcon style={{ width: '1rem' }} icon={faFileExcel} /> </button>
                                         </div>
                                         <div className='row w-75'>
                                             <button className='btn btn-secondary' onClick={() => endInventory()} >Close Inventory</button>
