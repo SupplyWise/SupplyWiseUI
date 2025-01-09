@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie'; // Import js-cookie
-//import { API_URL } from '../components/api_url';
+import { API_URL } from '../../api_url'; // Import API_URL
 import Head from 'next/head';
 
 const Login = () => {
@@ -11,8 +11,7 @@ const Login = () => {
         const { code } = router.query;
 
         if (code) {
-            // TODO - replace with general API URL when in production
-            fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/auth/tokens`, {
+            fetch(`${API_URL}/tokens/exchange`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -22,7 +21,7 @@ const Login = () => {
                 .then(response => response.json())
                 .then(data => {
                     console.log("Token exchange successful", data);
-                    const { access_token, refresh_token, expires_in, username } = JSON.parse(data.body);
+                    const { access_token, refresh_token, expires_in, username } = data;
 
                     // Store tokens in cookies
                     Cookies.set('access_token', access_token, { expires: expires_in / 86400 });
@@ -42,7 +41,7 @@ const Login = () => {
                 <title>Authenticating...</title>
                 <meta name="description" content="SupplyWise application" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <link rel="icon" href="/favicon.ico" />
+                <link rel="icon" href="/Logo_Icon.png" />
             </Head>
             <div style={styles.container}>
                 <div style={styles.spinner}></div>

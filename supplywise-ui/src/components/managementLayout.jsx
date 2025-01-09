@@ -96,7 +96,7 @@ export default function DashboardLayout({ children }) {
     
             // Step 2: Refresh the tokens
             // TODO : Change to general API URL when in production
-            const tokenResponse = await fetch(`https://zo9bnne4ec.execute-api.eu-west-1.amazonaws.com/dev/auth/refresh`, {
+            const tokenResponse = await fetch(`${API_URL}/tokens/refresh`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -110,7 +110,7 @@ export default function DashboardLayout({ children }) {
     
             const tokenData = await tokenResponse.json();
 
-            const { access_token, refresh_token, expires_in, username } = JSON.parse(tokenData.body);
+            const { access_token, refresh_token, expires_in, username } = tokenData;
 
             // Store tokens in cookies
             Cookies.set('access_token', access_token, { expires: expires_in / 86400 });

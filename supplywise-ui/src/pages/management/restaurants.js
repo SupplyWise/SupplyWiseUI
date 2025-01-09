@@ -53,6 +53,27 @@ export default function Restaurants() {
         throw new Error(`Failed to create restaurant: ${response.statusText}`);
       }
 
+        fetch(`${API_URL}/restaurants`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${Cookies.get('access_token')}`,
+            },
+            body: JSON.stringify({ name: restaurantToCreate, company: JSON.parse(sessionStorage.getItem('company')) }),
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to create restaurant');
+                }
+                return response.text();
+            })
+            .then((message) => {
+                console.log(message);
+                window.location.reload();
+            })
+            .catch((error) => console.error(error));
+    
+};
 
       // Clear the input field and close the modal
       setRestaurantToCreate('');
