@@ -173,8 +173,8 @@ export default function Restaurants() {
                                             .filter(inventory =>
                                                 inventory.closingDate !== null &&
                                                 (dateStart === '' || inventory.emissionDate >= dateStart) &&
-                                                (dateEnd === '' || inventory.closingDate <= dateEnd)
-                                                // && (closedBy === '' || inventory.closedBy === closedBy)
+                                                (dateEnd === '' || inventory.closingDate <= dateEnd) &&
+                                                (closedBy === '' || inventory.closedBy === closedBy)
                                             )
                                             .map((inventory) => (
                                                 <tr key={inventory.id}>
