@@ -56,6 +56,7 @@ export default function Inventory() {
                     minimumStockQuantity: item.minimumStockQuantity || 0,
                 }));
                 setInventoryOngoing(inventory);
+                setInventoryId(inventory.id);
             })
             .catch((error) => console.error(error));
     };
@@ -668,6 +669,7 @@ export default function Inventory() {
                             <div className='col-3'>
                                 <div className='bg-dark text-white py-3 ms-3' style={{ height: '100%', width: '95%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                     <h4 className='text-center'>Inventory Details</h4>
+                                    <h6 className='mb-4 text-center text-secondary'>ID: {inventoryId}</h6>
                                     <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.items.length} products)</h6>
                                     <div className='text-center mt-2'>
                                         <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
