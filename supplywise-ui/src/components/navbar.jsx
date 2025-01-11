@@ -7,25 +7,6 @@ import Link from 'next/link';
 
 
 export default function Navbar() {
-    useEffect(() => {
-
-        var navbarShrink = function () {
-            const navbarCollapsible = document.body.querySelector('#mainNav');
-            if (!navbarCollapsible) {
-                return;
-            }
-            navbarCollapsible.classList.add('navbar-shrink')
-
-        };
-
-        navbarShrink();
-        document.addEventListener('scroll', navbarShrink);
-    });
-
-    useEffect(() => {
-        // import bootstrap after the component is mounted
-        import('bootstrap/dist/js/bootstrap.bundle.min.js')
-    }, []);
 
     const router = useRouter();
     const [currentPage, setCurrentPage] = useState('');
@@ -37,29 +18,29 @@ export default function Navbar() {
 
 
     return (
-        <nav className="navbar navbar-expand-lg bg-secondary text-uppercase fixed-top" id="mainNav">
-            <div className="container">
-                <Link className="navbar-brand" href="/">
-                    SupplyWise
+        <nav className="navbar navbar-expand-lg bg-light fixed-top shadow" id="mainNav">
+            <div className="container-fluid" style={{ width: '90%' }}>
+                <Link className="navbar-brand text-black" href="/">
+                    <Image src="/Logo_Nav.png" alt="Supplywise" width={175} height={50} />
                 </Link>
-                <button className="navbar-toggler text-uppercase font-weight-bold bg-primary text-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <button className="navbar-toggler text-uppercase sw-button text-white rounded" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                     <FontAwesomeIcon icon={faBars} />
                 </button>
                 <div className="collapse navbar-collapse" id="navbarResponsive">
-                    <ul className="navbar-nav ms-auto">
-                        <li className="nav-item mx-0 mx-lg-1">
-                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded ${currentPage === '/' ? 'active' : ''}`} href="/">
-                                Home
+                    <ul className="navbar-nav ms-auto fs-5">
+                        <li className="nav-item d-none mx-0 mx-lg-1">
+                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded text-black`} href="/about">
+                                Documentation
                             </Link>
                         </li>
                         <li className="nav-item mx-0 mx-lg-1">
-                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded ${currentPage === '/diseases' ? 'active' : ''}`} href="/pricing">
-                                Pricing
+                            <Link href="https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/signup?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=https://d245iwoa00k2r.cloudfront.net/login&response_type=code&scope=email+openid+phone" className="register-button nav-link py-3 px-0 px-lg-3 rounded-pill fs-5 fw-bold">
+                                Register
                             </Link>
                         </li>
                         <li className="nav-item mx-0 mx-lg-1">
-                            <Link className={`nav-link py-3 px-0 px-lg-3 rounded ${currentPage === '/about' ? 'active' : ''}`} href="/about">
-                                About
+                            <Link href="https://eu-west-1cqv0ahnls.auth.eu-west-1.amazoncognito.com/login?client_id=3p7arovt4ql7qasmbjg52u1qas&redirect_uri=https://d245iwoa00k2r.cloudfront.net/login&response_type=code&scope=email+openid+phone" className={`login-button nav-link py-3 px-0 px-lg-3 rounded-pill text fs-5 fw-bold`}>
+                                Login
                             </Link>
                         </li>
                     </ul>
