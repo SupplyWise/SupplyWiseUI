@@ -71,9 +71,7 @@ export default function Restaurants() {
                 console.log(message);
                 window.location.reload();
             })
-            .catch((error) => console.error(error));
-    
-};
+          .catch((error) => console.error(error));
 
       // Clear the input field and close the modal
       setRestaurantToCreate('');
@@ -119,3 +117,4 @@ export default function Restaurants() {
     </DashboardLayout>
   );
 }
+

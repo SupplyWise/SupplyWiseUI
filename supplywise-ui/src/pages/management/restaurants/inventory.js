@@ -31,38 +31,7 @@ export default function Inventory() {
     const [selectedSchedule, setSelectedSchedule] = useState('');
     const [customDays, setCustomDays] = useState('');
     const [scheduleError, setScheduleError] = useState('');
-    
-
-    // Fetch user role from session or context
-    useEffect(() => {
-        const token = Cookies.get('access_token');
-        fetch(`${API_URL}/auth/roles`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`, // Include the access token
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch user roles');
-                }
-                return response.text();
-            })
-            .then((data) => {
-                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim().replace('ROLE_', ''));
-                setUserRoles(rolesList);
-                console.log(rolesList);
-            })
-            .catch((error) => {
-                console.error("Error fetching company details:", error.message);
-            });
-    }, []);
-
-    useEffect(() => {
-        fetchInventory();
-        fetchInventorySchedule();
-    }, []);
+    const [inventoryId, setInventoryId] = useState(null);
 
     const fetchInventory = () => {
         fetch(`${API_URL}/inventories/restaurant/${JSON.parse(sessionStorage.getItem('selectedRestaurant')).id}/open`, {
@@ -128,6 +97,34 @@ export default function Inventory() {
         
         .catch((error) => console.error('Error fetching inventory schedule:', error));
     };
+    
+    // Fetch user role from session or context
+    useEffect(() => {
+        const token = Cookies.get('access_token');
+        fetch(`${API_URL}/auth/roles`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Include the access token
+            },
+        })
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user roles');
+                }
+                return response.text();
+            })
+            .then((data) => {
+                const rolesList = data.replace(/[\[\]']+/g, '').split(',').map(role => role.trim().replace('ROLE_', ''));
+                setUserRoles(rolesList);
+                console.log(rolesList);
+            })
+            .catch((error) => {
+                console.error("Error fetching roles:", error.message);
+            });
+        fetchInventory();
+        fetchInventorySchedule();
+    }, []);
 
     const handleScheduleUpdate = async () => {
         try {
@@ -209,13 +206,17 @@ export default function Inventory() {
     };
 
     useEffect(() => {
-        if (inventorySchedule !== 'not set') {
-            setIsEndDateDisabled(true);  // Disable end date field if schedule is defined
-            setEndDate(getDefaultEndDate(startDate, inventorySchedule));  // Set end date based on schedule
-        } else {
-            setIsEndDateDisabled(false);  // Enable end date if schedule is not defined
-            setEndDate('');  // Keep end date empty if no schedule
-        }
+        const updateEndDateState = () => {
+            if (inventorySchedule !== 'not set') {
+                setIsEndDateDisabled(true); // Disable end date field
+                setEndDate(getDefaultEndDate(startDate, inventorySchedule)); // Set end date based on schedule
+            } else {
+                setIsEndDateDisabled(false); // Enable end date field
+                setEndDate(''); // Clear end date
+            }
+        };
+    
+        updateEndDateState();
     }, [inventorySchedule, startDate]);
     
     const startInventory = () => {
@@ -570,6 +571,9 @@ export default function Inventory() {
         }
     };
 
+    if (!userRoles) {
+        return <DashboardLayout>Loading...</DashboardLayout>;
+    }
 
     return (
         <DashboardLayout>
@@ -662,10 +666,10 @@ export default function Inventory() {
                                 </div>
                             </div>
                             <div className='col-3'>
-                                <div className='bg-dark text-white p-3 ms-5' style={{ height: '100%', width: '125%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div className='bg-dark text-white py-3 ms-3' style={{ height: '100%', width: '95%', borderRadius: '25px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                     <h4 className='text-center'>Inventory Details</h4>
                                     <h6 className='mb-4 text-center text-secondary'>({inventoryOngoing.items.length} products)</h6>
-                                    <div className='text-end mt-2'>
+                                    <div className='text-center mt-2'>
                                         <h6><span className='fw-bold'>Starting Date:</span> {inventoryOngoing.emissionDate.split('T')[0]}</h6>
                                         <h6><span className='fw-bold'>Closing Date:</span> {inventoryOngoing.expectedClosingDate === null ? 'Not Defined' : inventoryOngoing.expectedClosingDate.split('T')[0]}</h6>
                                         </div>
